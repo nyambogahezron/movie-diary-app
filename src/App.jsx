@@ -1,8 +1,9 @@
 import Navbar from './components/Navbar';
 const App = () => {
   return (
-    <main>
+    <main className='container'>
       <Navbar />
+      <div>home</div>
     </main>
   );
 };
