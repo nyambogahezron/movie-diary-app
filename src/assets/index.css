@@ -134,11 +134,13 @@ a:hover {
 .btn {
   cursor: pointer;
   color: var(--white);
+  font-size: 1rem;
+  font-weight: 700;
   background: var(--primary-500);
   border: transparent;
   border-radius: var(--borderRadius);
   letter-spacing: var(--letterSpacing);
-  padding: 0.375rem 0.75rem;
+  padding: 0.8rem 0.75rem;
   box-shadow: var(--shadow-1);
   transition: var(--transition);
   text-transform: capitalize;
@@ -159,6 +161,56 @@ a:hover {
 .btn-block {
   width: 100%;
 }
+
+/* alerts */
+.alert {
+  padding: 0.375rem 0.75rem;
+  margin-bottom: 1rem;
+  border-color: transparent;
+  border-radius: var(--borderRadius);
+}
+
+.alert-danger {
+  color: var(--red-dark);
+  background: var(--red-light);
+}
+
+.alert-success {
+  color: var(--green-dark);
+  background: var(--green-light);
+}
+
+/* Loading */
+
+.loading {
+  width: 6rem;
+  height: 6rem;
+  border: 5px solid var(--grey-400);
+  border-radius: 50%;
+  border-top-color: var(--primary-500);
+  animation: spinner 0.6s linear infinite;
+}
+.loading {
+  margin: 0 auto;
+}
+/* title */
+
+.title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2.5rem;
+  color: var(--primary-800);
+}
+
+.title-underline {
+  background: var(--primary-500);
+  width: 7rem;
+  height: 0.25rem;
+  margin: 0 auto;
+  margin-top: -1rem;
+}
+
+/*  */
 
 /* ############# NAVBAR ############### */
 .logo {
@@ -318,3 +370,108 @@ nav {
 }
 
 /* ############# Home Section ############### */
+
+/* ############# Login Page ############### */
+.login {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  justify-content: center;
+}
+.form {
+  width: 90vw;
+  max-width: var(--fixed-width);
+  background: var(--white);
+  border-radius: var(--borderRadius);
+  box-shadow: var(--shadow-2);
+  position: relative;
+  padding: 2rem 2.5rem;
+  margin: 1rem auto;
+}
+.form-label {
+  display: block;
+  font-size: var(--smallText);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  text-transform: capitalize;
+  letter-spacing: var(--letterSpacing);
+  align-items: start;
+  text-align: start;
+  margin-left: 0;
+}
+.form-input,
+.form-textarea {
+  width: 100%;
+  color: var(--black);
+  padding: 0.494rem 0.75rem;
+  border-radius: var(--borderRadius);
+  background: var(--backgroundColor);
+  border: 2px solid var(--grey-200);
+}
+
+.form-row {
+  margin-bottom: 1rem;
+}
+
+.form-textarea {
+  height: 7rem;
+}
+::placeholder {
+  font-family: inherit;
+  color: var(--grey-400);
+  margin-left: 0;
+}
+.hidden {
+  display: none;
+}
+.show {
+  display: block;
+}
+.form-alert {
+  color: var(--red-dark);
+  letter-spacing: var(--letterSpacing);
+  text-transform: capitalize;
+  text-align: center;
+  width: 75vh;
+  /* display: block; */
+  /* display: none; */
+}
+.form-title {
+  margin-top: 2.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.login-form {
+  max-width: 450px;
+}
+.reg-txt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.submit-btn {
+  margin-top: 10px;
+}
+.reg-txt hr {
+  height: 2px;
+  background: var(--grey-400);
+  width: 90px;
+  margin-bottom: -2px;
+}
+.nav-user-btn {
+  margin-top: 10px;
+  border: 1px solid var(--grey-100);
+  width: 75vh;
+  padding: 10px 0;
+  align-items: center;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.nav-user-btn:hover {
+  border: 1px solid var(--grey-400);
+  padding: 10px 0;
+  background: var(--grey-200);
+}

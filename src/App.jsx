@@ -1,9 +1,13 @@
-import Navbar from './components/Navbar';
+// import Navbar from './components/Navbar';
+// import Login from './pages/Login';
+import Register from './pages/Register';
 const App = () => {
   return (
     <main className='container'>
-      <Navbar />
-      <div>home</div>
+      {/* <Navbar /> */}
+      {/* <Login /> */}
+      <Register />
+      {/* <div>home</div> */}
     </main>
   );
 };
