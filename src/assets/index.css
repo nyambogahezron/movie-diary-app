@@ -52,6 +52,7 @@ html {
   --borderRadius: 0.25rem;
   --letterSpacing: 1px;
   --transition: 0.3s ease-in-out all;
+  --transition-2: all 0.3s ease;
   --max-width: 1120px;
   --fixed-width: 600px;
 
@@ -134,13 +135,13 @@ a:hover {
 .btn {
   cursor: pointer;
   color: var(--white);
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   background: var(--primary-500);
   border: transparent;
   border-radius: var(--borderRadius);
   letter-spacing: var(--letterSpacing);
-  padding: 0.8rem 0.75rem;
+  padding: 0.3rem 0.7rem;
   box-shadow: var(--shadow-1);
   transition: var(--transition);
   text-transform: capitalize;
@@ -150,17 +151,7 @@ a:hover {
   background: var(--primary-700);
   box-shadow: var(--shadow-3);
 }
-.btn-hipster {
-  color: var(--primary-500);
-  background: var(--primary-200);
-}
-.btn-hipster:hover {
-  color: var(--primary-200);
-  background: var(--primary-700);
-}
-.btn-block {
-  width: 100%;
-}
+
 
 /* alerts */
 .alert {
@@ -201,7 +192,11 @@ a:hover {
   font-size: 2.5rem;
   color: var(--primary-800);
 }
-
+@media (max-width: 700px){
+  .title{
+    font-size: 1.6rem;
+  }
+}
 .title-underline {
   background: var(--primary-500);
   width: 7rem;
@@ -213,6 +208,8 @@ a:hover {
 /*  */
 
 /* ############# NAVBAR ############### */
+
+
 .logo {
   height: 40px;
   width: 120px;
@@ -221,7 +218,7 @@ a:hover {
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 0.5em #646cffaa);
+  cursor: pointer;
 }
 nav {
   background: var(--white);
@@ -282,6 +279,8 @@ nav {
   width: 100%;
   display: block;
   transition: var(--transition);
+  z-index: 999;
+
 }
 .sm-logout {
   display: none;
@@ -312,6 +311,8 @@ nav {
     position: relative;
     top: 0;
     width: auto !important;
+    z-index: 999;
+
   }
   .links {
     display: flex;
@@ -434,8 +435,6 @@ nav {
   text-transform: capitalize;
   text-align: center;
   width: 75vh;
-  /* display: block; */
-  /* display: none; */
 }
 .form-title {
   margin-top: 2.5rem;
@@ -474,4 +473,223 @@ nav {
   border: 1px solid var(--grey-400);
   padding: 10px 0;
   background: var(--grey-200);
+}
+.not-found-container {
+  padding-inline: 26px;
+}
+
+.not-found-container .link-button {
+  width: 100%;
+  background-color: #161616;
+  color: white;
+}
+
+/* ############# HOME PAGE ############### */
+.home-container{
+  margin: auto;
+  padding: 0 10px;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  display: block;
+  width: 100%;
+}
+.home-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 20px;
+}
+.my-list{
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  row-gap: 20px;
+ }
+
+ @media screen and (max-width: 910px) {
+.my-list{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+ }
+}
+ @media screen and (max-width: 560px) {
+.my-list{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+ }
+}
+ @media screen and (max-width: 390px) {
+.my-list{
+  grid-template-columns: repeat(1, 1fr);
+ }
+ .home-container{
+  padding: 0 ;
+}
+ .my-list .list-card{
+  position: relative;
+  width: 100%;
+  margin: auto;
+  padding: 0;
+ }
+
+}
+
+.my-list .list-card{
+  max-height: 400px;
+  max-width: 270px;
+  border: 2px solid var(--grey-400);
+  box-shadow: var(--shadow-2);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+ .list-card img{
+  width: 100%;
+  height: 300px;
+  transition: var(--transition-2);
+  overflow: hidden;
+ }
+ .list-card:hover{
+  opacity: 0.9;
+ }
+.list-card .list-card-favorite{
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 2.3rem;
+  color: red;
+  visibility: hidden;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -130%);
+  transition: var(--transition-2);
+}
+.list-card:hover .list-card-favorite{
+  visibility: visible;
+}
+
+.list-card .list-card-favorite:hover{
+  color: var(--red-dark);
+}
+.list-card-favorite-active{
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  color: red;
+  font-size: 1.5rem;
+
+}
+.list-desp{
+  justify-content: start;
+  align-items: start;
+}
+.list-card-title{
+  font-family: cursive;
+  font-size: 1rem;
+}
+.list-card-sn{
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.list-card-rate{
+  color: yellow;
+}
+
+/* ############# Help Page ############### */
+
+
+.container {
+  width: 90vw;
+  margin: 1rem auto;
+  background: var(--white);
+  border-radius: var(--borderRadius);
+  padding: 2.5rem;
+  max-width: 800px;
+  box-shadow: var(--shadow-3);
+  transition: var(--transition-2);
+
+}
+.container h1 {
+  text-align: center;
+  margin-bottom: 3rem;
+  font-size: 2rem;
+  font-family: cursive;
+  text-transform: capitalize;
+  color: var(--grey-700);
+}
+.question {
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--grey-200);
+  margin-bottom: 1rem;
+  border-radius: var(--borderRadius);
+  box-shadow: var(--shadow-3);
+  margin-bottom: 2rem;
+  transition: var(--transition-2);
+}
+.q-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ask-btn{
+  border-radius: 5px;
+  border: 2px solid var(--red-light);
+  color: var(--black);
+  font-size: 1.2rem;
+  background: transparent;
+  width: 70px;
+  transition: var(--transition);
+}
+.ask-btn:hover{
+  background: var(--primary-300);
+}
+.question-icon{
+  border: 2px solid var(--grey-400);
+  background: var(--primary-700);
+  color: var(--white);
+  border-radius: 50%;
+  padding: 10px;
+  margin-left: -50px;
+}
+.question p {
+  color: var(--grey-500);
+  line-height: 2;
+  margin-top: 1rem;
+  transition: var(--transition-2);
+
+}
+.question header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.question h5 {
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--grey-700);
+}
+.question-btn {
+  background: transparent;
+  border-color: transparent;
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--white);
+  cursor: pointer;
+  align-self: flex-start;
+  min-width: 2rem;
+  transition: var(--transition-2);
+
 }

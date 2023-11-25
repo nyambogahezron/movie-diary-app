@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Alert } from '../../components/Alert';
 
 const Register = () => {
@@ -101,7 +102,7 @@ const Register = () => {
           {`Already Have An Account`} <hr />
         </div>
         <div className='nav-user-btn'>
-          <a href=''>Login</a>
+          <Link to='/login'>Login</Link>
         </div>
       </div>
     </main>

@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   FaBars,
-  FaAngleDoubleRight,
-  FaLock,
-  FaPlay,
-  FaSearch,
-  FaUserAlt,
+  // FaAngleDoubleRight,
+  // FaLock,
+  // FaPlay,
+  // FaSearch,
+  // FaUserAlt,
 } from 'react-icons/fa';
 import links from './data';
 import logo from '../../assets/logo.png';
@@ -50,13 +51,13 @@ const Navbar = () => {
               return (
                 <>
                   <li key={id}>
-                    <a href={url}>{text}</a>
+                    <Link to={url}>{text}</Link>
                   </li>
                 </>
               );
             })}
             <li className='sm-logout'>
-              <a href='#'>Logout</a>
+              <Link href='#'>Logout</Link>
             </li>
           </ul>
         </div>

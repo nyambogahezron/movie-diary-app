@@ -1,14 +1,16 @@
+import { Link } from 'react-router-dom';
+
 const ProfileNav = () => {
   return (
     <div className='user-profile'>
-      <div className="user-name">
-      <div>Hello,</div>
-        <a href=''>
+      <div className='user-name'>
+        <div>Hello,</div>
+        <Link to='/profile'>
           <div>user name</div>
-        </a>
+        </Link>
       </div>
       <div className='logout'>
-        <a href='/'>Logout</a>
+        <Link to='/login'>Login</Link>
       </div>
     </div>
   );
