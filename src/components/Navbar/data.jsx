@@ -6,12 +6,12 @@ const Links = [
   },
   {
     id: 2,
-    url: '/Favorite',
+    url: '/favorite',
     text: 'Favorite',
   },
   {
     id: 3,
-    url: '/Explore',
+    url: '/explore',
     text: 'Explore',
   },
   {
@@ -21,7 +21,7 @@ const Links = [
   },
   {
     id: 5,
-    url: '/Help',
+    url: '/help',
     text: 'Help',
   },
 ];
