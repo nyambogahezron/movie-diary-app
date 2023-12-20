@@ -2,16 +2,17 @@ import Navbar from '../../components/Navbar';
 import { FaHeart, FaStar, FaStarHalfAlt } from 'react-icons/fa';
 
 const Explore = () => {
-  return <section>
-          <header>
+  return (
+    <section>
+      <header>
         <Navbar />
       </header>
       <main>
         <div className='home-container '>
-          <header className='home-header'>
+          {/* <header className='home-header'>
             <div className='title'>My List</div>
             <div className='btn btn-add'>ADD NEW</div>
-          </header>
+          </header> */}
           <article className='my-list'>
             <div className='list-card'>
               <div className='list-card-img'>
@@ -192,6 +193,7 @@ const Explore = () => {
           </article>
         </div>
       </main>
-  </section>;
+    </section>
+  );
 };
 export default Explore;

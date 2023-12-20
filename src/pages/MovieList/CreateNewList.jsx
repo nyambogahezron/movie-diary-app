@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Alert } from '../../components/Alert';
 
 const CreateNewList = () => {
-  const [movieName, setmovieName] = useState('');
+  const [movieName, setMovieName] = useState('');
   const [MovieType, setMovieType] = useState('');
   const [totalSeries, setTotalSeries] = useState('');
   const [CurrentSeries, setCurrentSeries] = useState('');
@@ -45,7 +44,7 @@ const CreateNewList = () => {
             type='text'
             className='form-input '
             value={movieName}
-            onChange={(e) => setmovieName(e.target.value)}
+            onChange={(e) => setMovieName(e.target.value)}
             id='movieName'
           />
         </div>
@@ -85,22 +84,17 @@ const CreateNewList = () => {
             id='CurrentSeries'
           />
         </div>
-              <div className='form-row'>
+        <div className='form-row'>
           <label htmlFor='CurrentSeries' className='form-label'>
             Cover Image
           </label>
-          <input
-            type='file'
-            className='form-input '
-            id='CurrentSeries'
-          />
+          <input type='file' className='form-input ' id='CurrentSeries' />
         </div>
 
         <button type='submit' className='submit-btn btn btn-block'>
-          Create 
+          Create
         </button>
       </form>
-
     </main>
   );
 };

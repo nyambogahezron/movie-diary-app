@@ -145,16 +145,16 @@ a:hover {
   background: var(--primary-700);
   box-shadow: var(--shadow-3);
 }
-.close-btn{
+.close-btn {
   font-size: 1rem;
   color: var(--red-dark);
   transition: var(--transition-2);
 }
-.close-btn:hover{
+.close-btn:hover {
   transform: scale(1.1);
 }
 
-.btn-block{
+.btn-block {
   width: 100%;
 }
 
@@ -530,37 +530,36 @@ nav {
   transition: var(--transition-2);
 }
 
-.home-header form{
+.home-header form {
   max-width: 100%;
   width: 400px;
-
 }
-.movie-search-list{
+.movie-search-list {
   width: 100%;
   display: flex;
   position: relative;
 }
-.movie-search-list .search-btn{
+.movie-search-list .search-btn {
   position: absolute;
   right: 0;
 }
-.search-btn{
+.search-btn {
   font-size: 1rem;
 }
-.movie-search-list input{
-background: var(--grey-400);
-position: relative;
-border-radius: 5px;
-padding: 8px 0;
-width: 100%;
-font-size: 1rem;
-font-weight: 700;
-color: var(--black);
-font-family: sans-serif;
-border: none;
+.movie-search-list input {
+  background: var(--grey-400);
+  position: relative;
+  border-radius: 5px;
+  padding: 8px 0;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--black);
+  font-family: sans-serif;
+  border: none;
 }
 
-.add-btn a{
+.add-btn a {
   position: fixed;
   z-index: 1;
   color: #fff;
@@ -577,7 +576,7 @@ border: none;
   cursor: pointer;
   transition: var(--transition);
 }
-.add-btn a:hover{
+.add-btn a:hover {
   background: var(--primary-200);
   color: red;
 }
@@ -594,7 +593,7 @@ border: none;
   transition: var(--transition-2);
   position: relative;
 }
-.movie-list-container .list-group-item{
+.movie-list-container .list-group-item {
   color: var(--white);
   background: var(--grey-600);
   display: flex;
@@ -606,19 +605,18 @@ border: none;
   padding: 0.4rem;
   font-size: 0.8rem;
 }
-.movie-list-container .list-group{
+.movie-list-container .list-group {
   display: flex;
   align-items: center;
   justify-content: space-around;
 }
 @media (max-width: 500px) {
-  .list-group{
+  .list-group {
     display: flex;
     flex-direction: column;
   }
-
 }
-.movie-list-action{
+.movie-list-action a {
   display: flex;
   justify-content: end;
   margin: 10px;
@@ -626,7 +624,6 @@ border: none;
   color: green;
   cursor: pointer;
 }
-
 
 /* ############# Help Page ############### */
 
@@ -686,8 +683,8 @@ border: none;
   padding: 10px;
   margin-left: -50px;
 }
-@media (max-width:500px){
-  .question-icon{
+@media (max-width: 500px) {
+  .question-icon {
     display: none;
   }
 }
@@ -725,27 +722,25 @@ border: none;
   transition: var(--transition-2);
 }
 
-@media (max-width:500px){
-  .container{
+@media (max-width: 500px) {
+  .container {
     padding: 0 1rem;
   }
-  .question{
+  .question {
     margin-left: -10px;
     margin-right: 5px;
   }
-  .container h1{
+  .container h1 {
     font-size: 1rem;
   }
-  .ask-btn{
+  .ask-btn {
     padding: 0.1rem;
     margin: 4px;
     font-size: 0.9rem;
   }
 }
 
-
 /* ############# Explore Page ############### */
-
 
 .my-list {
   display: grid;

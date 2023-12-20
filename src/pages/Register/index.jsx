@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert } from '../../components/Alert';
+import { toast } from 'react-toastify';
+
+
 
 const Register = () => {
   const [userName, setUserName] = useState('');
@@ -25,6 +28,7 @@ const Register = () => {
         setAlertMsg('Please, All Field Are Required! ');
         setIsError('true');
         setShowAlert('true');
+        toast.info('Please Provide All Fields')
       }
       if (password != confirmPassword) {
         setAlertMsg(`Password Entered Don't Match`);
@@ -36,6 +40,7 @@ const Register = () => {
 
   return (
     <main className='login'>
+    <tostContainer />
       <div className='title form-title'>Register</div>
       <div className={`error  ${showAlert ? 'show' : 'hidden'}`}>
         <Alert alertMsg={alertMsg} isError={isError} />
