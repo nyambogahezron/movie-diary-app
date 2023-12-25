@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/Alert';
+import { useDispatch, useSelector} from 'react-redux';
+import {useLoginMutation} from '../../slices/usersApiSlice';
+import { setCredentials} from '../../slices/authSlice';
+import { toast } from 'react-toastify';
 
 const Login = () => {
   const [userName, setUserName] = useState('');
@@ -10,20 +14,34 @@ const Login = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMsg, setAlertMsg] = useState('');
 
-  useEffect(() => {
-    setTimeout(() => {
-      setShowAlert(false);
-    }, 3000);
-  }, [showAlert]);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const handleLoginSubmit = (e) => {
+  const [login, { isLoading }] = useLoginMutation();
+
+  const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (userInfo) {
+      navigate('/');
+    }
+  }, [navigate, userInfo]);
+
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     console.log(userName, password, rememberMe);
     {
       if (!userName || !password) {
-        setAlertMsg('Please, All Field Are Required! ');
-        setIsError('true');
-        setShowAlert('true');
+        toast.error("Please provide all fields")
+      } else {
+        try {
+      const res = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ ...res }));
+      navigate('/');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
       }
     }
   };

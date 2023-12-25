@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Alert } from '../../components/Alert';
 import { toast } from 'react-toastify';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { useRegisterMutation } from '../../slices/usersApiSlice';
+import { setCredentials } from '../../slices/authSlice';
 
 
 const Register = () => {
@@ -14,33 +16,50 @@ const Register = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMsg, setAlertMsg] = useState('');
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [register, { isLoading }] = useRegisterMutation();
+
+  const { userInfo } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+    if (userInfo) {
+      navigate('/');
+    }
+  }, [navigate, userInfo]);
+
   useEffect(() => {
     setTimeout(() => {
       setShowAlert(false);
     }, 3000);
   }, [showAlert]);
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     console.log(userName, password, confirmPassword, userEmail);
-    {
-      if (!userName || !password || !confirmPassword || !userEmail) {
-        setAlertMsg('Please, All Field Are Required! ');
-        setIsError('true');
-        setShowAlert('true');
-        toast.info('Please Provide All Fields')
-      }
-      if (password != confirmPassword) {
-        setAlertMsg(`Password Entered Don't Match`);
-        setIsError('true');
-        setShowAlert('true');
-      }
+  
+    if (!userName || !password || !confirmPassword || !userEmail) {
+        toast.error('Please provide all fields')
     }
+    if (password != confirmPassword) {
+        toast.error('Passwords do not match')
+
+    } else {
+    try {
+      const res = await register({ userName, userEmail, password }).unwrap();
+      dispatch(setCredentials({ ...res }));
+      navigate('/');
+    } catch (err) {
+      console.log(err)
+      toast.error(err?.data?.message || err.error);
+    }
+  }
+  
   };
 
   return (
     <main className='login'>
-    <tostContainer />
       <div className='title form-title'>Register</div>
       <div className={`error  ${showAlert ? 'show' : 'hidden'}`}>
         <Alert alertMsg={alertMsg} isError={isError} />
