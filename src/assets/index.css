@@ -433,6 +433,9 @@ nav {
   background: #444;
   color: var(--white);
   border: none;
+  font-size: 16px;
+  font-family: sans-serif;
+  letter-spacing: 2px;
 }
 
 .form-label {
@@ -497,10 +500,13 @@ nav {
 }
 @media screen and (max-width: 445px) {
   .form-wrapper {
-    max-width: 400px;
-    padding: 10px;
+    max-width: 350px;
+    padding: 5px;
   }
-  .nav-user-btn{
+  .form {
+    margin: 0;
+  }
+  .nav-user-btn {
     width: 390px;
   }
 }
@@ -510,17 +516,18 @@ nav {
     width: 100%;
     padding: 2px;
   }
-  .form input {
-    width: 100%;
-  }
   .rem-me-input {
     display: none;
   }
-
 }
 .rem-txt {
   color: var(--green-dark);
   font-weight: bold;
+}
+@media screen and (max-width: 635px) {
+  .reg-txt {
+    font-size: 11px;
+  }
 }
 .reg-txt {
   display: flex;
@@ -551,7 +558,10 @@ nav {
 }
 @media screen and (max-width: 635px) {
   .nav-user-btn {
-    width: 370px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 6px 0 auto;
   }
 }
 
@@ -585,6 +595,18 @@ nav {
   margin: 30px 0;
   background: var(--primary-800);
   padding: 10px 35px;
+}
+.rem-me-input{
+  display: flex;
+  gap: 5px;
+}
+.login-action a {
+ position: absolute;
+ right: 0;
+ margin: 0;
+ font-size: 12px;
+ text-decoration: underline;
+ font-family: sans-serif;
 }
 
 /* ############# HOME PAGE ############### */

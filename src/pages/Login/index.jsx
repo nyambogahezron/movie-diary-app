@@ -87,10 +87,15 @@ const Login = () => {
               name='rememberMe'
               onChange={(e) => setRememberMe(e.target.checked)}
             />
-            <label htmlFor='rememberMe' className='rem-txt'>
-              {" "}
-              Remember Me{" "}
-            </label>
+            <div className='login-action'>
+              <label htmlFor='rememberMe' className='rem-txt'>
+                {" "}
+                Remember Me{" "}
+              </label>
+              <span>
+                <Link to='#'>Forgot password</Link>
+              </span>
+            </div>
           </div>
           <button type='submit' className='submit-btn btn btn-block'>
             Login
@@ -101,9 +106,9 @@ const Login = () => {
             <hr />
             {`Don't Have Account`} <hr />
           </div>
-          <div className='nav-user-btn'>
-            <Link to='/register'>Register</Link>
-          </div>
+          <Link to='/register'>
+            <div className='nav-user-btn'>Register</div>
+          </Link>
         </div>
       </div>
     </main>
