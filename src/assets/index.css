@@ -65,8 +65,8 @@ html {
   --shadow-4: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -195,7 +195,7 @@ a:hover {
   text-align: center;
   font-weight: 700;
   font-size: 2.5rem;
-  color: var(--primary-800);
+  color: var(--red-dark);
 }
 @media (max-width: 700px) {
   .title {
@@ -376,22 +376,65 @@ nav {
 
 /* ############# Login Page ############### */
 .login {
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
   align-items: center;
   display: flex;
   flex-direction: column;
   text-align: center;
   justify-content: center;
+  background: url("/hero-img.jpg");
+  background-position: left;
+  object-fit: cover;
+  overflow: hidden;
 }
+.login .logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 20px 10px;
+  opacity: 0.7;
+  transition: opacity, 0.3s;
+}
+@media screen and (max-width: 1040px) {
+  .login .logo {
+    display: none;
+  }
+}
+.login .logo:hover {
+  opacity: 1;
+}
+.login .logo img {
+  height: 70px;
+  width: 200px;
+}
+.form-wrapper {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 4px;
+  padding: 50px;
+  width: 600px;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+}
+
 .form {
-  width: 90vw;
   max-width: var(--fixed-width);
-  background: var(--white);
+  background: transparent;
   border-radius: var(--borderRadius);
   box-shadow: var(--shadow-2);
   position: relative;
-  padding: 2rem 2.5rem;
-  margin: 1rem auto;
+  padding: 1.7rem 1rem;
 }
+
+.form input:is(:focus, :valid) {
+  background: #444;
+  color: var(--white);
+  border: none;
+}
+
 .form-label {
   display: block;
   font-size: var(--smallText);
@@ -402,14 +445,15 @@ nav {
   align-items: start;
   text-align: start;
   margin-left: 0;
+  color: var(--white);
 }
 .form-input,
 .form-textarea {
   width: 100%;
   color: var(--black);
-  padding: 0.494rem 0.75rem;
+  padding: 1rem 0.75rem;
   border-radius: var(--borderRadius);
-  background: var(--backgroundColor);
+  background: #333;
   border: 2px solid var(--grey-200);
 }
 
@@ -422,12 +466,13 @@ nav {
 }
 ::placeholder {
   font-family: inherit;
-  color: var(--grey-400);
+  color: var(--white);
   margin-left: 0;
 }
 .hidden {
   display: none;
 }
+
 .show {
   display: block;
 }
@@ -439,21 +484,55 @@ nav {
   width: 75vh;
 }
 .form-title {
-  margin-top: 2.5rem;
-  padding-bottom: 1.5rem;
+  position: relative;
 }
 
 .login-form {
-  max-width: 450px;
+  max-width: 600px;
+}
+@media screen and (max-width: 635px) {
+  .form-wrapper {
+    max-width: 450px;
+  }
+}
+@media screen and (max-width: 445px) {
+  .form-wrapper {
+    max-width: 400px;
+    padding: 10px;
+  }
+  .nav-user-btn{
+    width: 390px;
+  }
+}
+@media screen and (max-width: 300px) {
+  .form-wrapper {
+    max-width: 300px;
+    width: 100%;
+    padding: 2px;
+  }
+  .form input {
+    width: 100%;
+  }
+  .rem-me-input {
+    display: none;
+  }
+
+}
+.rem-txt {
+  color: var(--green-dark);
+  font-weight: bold;
 }
 .reg-txt {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  color: var(--green-dark);
+  font-weight: bold;
 }
 .submit-btn {
-  margin-top: 10px;
+  margin-top: 15px;
+  padding: 14px 10px;
 }
 .reg-txt hr {
   height: 2px;
@@ -463,12 +542,17 @@ nav {
 }
 .nav-user-btn {
   margin-top: 10px;
-  border: 1px solid var(--grey-100);
-  width: 75vh;
+  border: 0.2px solid var(--grey-50);
+  width: 70vh;
   padding: 10px 0;
   align-items: center;
   text-align: center;
   transition: var(--transition);
+}
+@media screen and (max-width: 635px) {
+  .nav-user-btn {
+    width: 370px;
+  }
 }
 
 .nav-user-btn:hover {
