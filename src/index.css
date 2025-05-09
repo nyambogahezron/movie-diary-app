@@ -1,125 +1,99 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
-  }
+:root {
+	--primary: 30, 58, 138; /* deep blue */
+	--secondary: 15, 118, 110; /* teal */
+	--accent: 220, 38, 38; /* red */
+	--success: 5, 150, 105; /* green */
+	--warning: 217, 119, 6; /* amber */
+	--error: 220, 38, 38; /* red */
 }
 
-@utility btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-opacity-50;
+body {
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	@apply bg-gray-900;
 }
 
-@utility btn-primary {
-  @apply bg-blue-800 hover:bg-blue-700 text-white focus:ring-blue-500;
-}
+@layer components {
+	.btn {
+		@apply inline-flex items-center justify-center px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-opacity-50;
+	}
 
-@utility btn-secondary {
-  @apply bg-teal-700 hover:bg-teal-600 text-white focus:ring-teal-400;
-}
+	.btn-primary {
+		@apply bg-blue-800 hover:bg-blue-700 text-white focus:ring-blue-500;
+	}
 
-@utility btn-accent {
-  @apply bg-red-600 hover:bg-red-500 text-white focus:ring-red-300;
-}
+	.btn-secondary {
+		@apply bg-teal-700 hover:bg-teal-600 text-white focus:ring-teal-400;
+	}
 
-@utility container-custom {
-  @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
-}
+	.btn-accent {
+		@apply bg-red-600 hover:bg-red-500 text-white focus:ring-red-300;
+	}
 
-@utility card {
-  @apply bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-700;
-}
+	.container-custom {
+		@apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+	}
 
-@utility nav-link {
-  @apply px-3 py-2 rounded-md text-sm font-medium transition-colors;
-}
+	.card {
+		@apply bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-700;
+	}
 
-@utility nav-link-active {
-  @apply bg-gray-800 text-white;
-}
+	.nav-link {
+		@apply px-3 py-2 rounded-md text-sm font-medium transition-colors;
+	}
 
-@utility nav-link-inactive {
-  @apply text-gray-300 hover:bg-gray-700 hover:text-white;
-}
+	.nav-link-active {
+		@apply bg-gray-800 text-white;
+	}
 
-@utility input {
-  @apply bg-gray-700 text-white border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
-}
+	.nav-link-inactive {
+		@apply text-gray-300 hover:bg-gray-700 hover:text-white;
+	}
 
-@layer utilities {
-  :root {
-    --primary: 30, 58, 138; /* deep blue */
-    --secondary: 15, 118, 110; /* teal */
-    --accent: 220, 38, 38; /* red */
-    --success: 5, 150, 105; /* green */
-    --warning: 217, 119, 6; /* amber */
-    --error: 220, 38, 38; /* red */
-  }
-
-  body {
-    font-family:
-      'Inter',
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      Roboto,
-      Oxygen,
-      Ubuntu,
-      Cantarell,
-      'Open Sans',
-      'Helvetica Neue',
-      sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    @apply bg-gray-900;
-  }
+	.input {
+		@apply bg-gray-700 text-white border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+	}
 }
 
 /* Animation classes */
 .fade-enter {
-  opacity: 0;
+	opacity: 0;
 }
 
 .fade-enter-active {
-  opacity: 1;
-  transition: opacity 300ms;
+	opacity: 1;
+	transition: opacity 300ms;
 }
 
 .fade-exit {
-  opacity: 1;
+	opacity: 1;
 }
 
 .fade-exit-active {
-  opacity: 0;
-  transition: opacity 300ms;
+	opacity: 0;
+	transition: opacity 300ms;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+	width: 8px;
+	height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-800;
+	@apply bg-gray-800;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-600 rounded-full;
+	@apply bg-gray-600 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
+	@apply bg-gray-500;
 }
