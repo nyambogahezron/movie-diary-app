@@ -1,75 +1,175 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import MediaCard from '@/components/MediaCard';
+import SearchBar from '@/components/SearchBar';
+import Colors from '@/constants/Colors';
+import { useTrendingContent } from '@/hooks/useTrendingContent';
+import { TrendingUp } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+	ActivityIndicator,
+	FlatList,
+	ScrollView,
+	StyleSheet,
+	Text,
+	View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function DiscoverScreen() {
+	const { trendingMovies, trendingShows, isLoading, error } =
+		useTrendingContent();
+	const [searchQuery, setSearchQuery] = useState('');
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+	if (error) {
+		return (
+			<View style={styles.errorContainer}>
+				<Text style={styles.errorText}>Oops! Something went wrong.</Text>
+				<Text style={styles.errorSubtext}>{error}</Text>
+			</View>
+		);
+	}
+
+	return (
+		<View style={styles.container}>
+			<ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollContent}
+				showsVerticalScrollIndicator={false}
+			>
+				<View style={styles.header}>
+					<Text style={styles.title}>ScreenDiary</Text>
+					<Text style={styles.subtitle}>
+						Discover and track your entertainment
+					</Text>
+				</View>
+
+				<SearchBar
+					value={searchQuery}
+					onChangeText={setSearchQuery}
+					placeholder='Search movies, TV shows...'
+					onSubmit={() => console.log('Search for:', searchQuery)}
+				/>
+
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<TrendingUp size={20} color={Colors.primary[500]} />
+						<Text style={styles.sectionTitle}>Trending Movies</Text>
+					</View>
+
+					{isLoading ? (
+						<ActivityIndicator
+							size='large'
+							color={Colors.primary[500]}
+							style={styles.loader}
+						/>
+					) : (
+						<FlatList
+							horizontal
+							showsHorizontalScrollIndicator={false}
+							data={trendingMovies}
+							keyExtractor={(item) => item.id.toString()}
+							renderItem={({ item }) => <MediaCard media={item} type='movie' />}
+							style={styles.list}
+							contentContainerStyle={styles.listContent}
+						/>
+					)}
+				</View>
+
+				<View style={styles.section}>
+					<View style={styles.sectionHeader}>
+						<TrendingUp size={20} color={Colors.primary[500]} />
+						<Text style={styles.sectionTitle}>Trending TV Shows</Text>
+					</View>
+
+					{isLoading ? (
+						<ActivityIndicator
+							size='large'
+							color={Colors.primary[500]}
+							style={styles.loader}
+						/>
+					) : (
+						<FlatList
+							horizontal
+							showsHorizontalScrollIndicator={false}
+							data={trendingShows}
+							keyExtractor={(item) => item.id.toString()}
+							renderItem={({ item }) => <MediaCard media={item} type='tv' />}
+							style={styles.list}
+							contentContainerStyle={styles.listContent}
+						/>
+					)}
+				</View>
+			</ScrollView>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+	container: {
+		flex: 1,
+		backgroundColor: Colors.neutral[950],
+	},
+	scrollView: {
+		flex: 1,
+	},
+	scrollContent: {
+		padding: 16,
+		paddingTop: 48,
+		paddingBottom: 32,
+	},
+	header: {
+		marginBottom: 24,
+	},
+	title: {
+		fontFamily: 'Inter-Bold',
+		fontSize: 28,
+		color: Colors.neutral[50],
+		marginBottom: 4,
+	},
+	subtitle: {
+		fontFamily: 'Inter-Regular',
+		fontSize: 16,
+		color: Colors.neutral[400],
+	},
+	section: {
+		marginBottom: 24,
+	},
+	sectionHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 16,
+	},
+	sectionTitle: {
+		fontFamily: 'Inter-Medium',
+		fontSize: 18,
+		color: Colors.neutral[100],
+		marginLeft: 8,
+	},
+	list: {
+		marginLeft: -8,
+	},
+	listContent: {
+		paddingLeft: 8,
+		paddingRight: 16,
+	},
+	loader: {
+		marginVertical: 32,
+	},
+	errorContainer: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: Colors.neutral[950],
+		padding: 24,
+	},
+	errorText: {
+		fontFamily: 'Inter-Bold',
+		fontSize: 20,
+		color: Colors.neutral[100],
+		marginBottom: 8,
+	},
+	errorSubtext: {
+		fontFamily: 'Inter-Regular',
+		fontSize: 16,
+		color: Colors.neutral[400],
+		textAlign: 'center',
+	},
 });
