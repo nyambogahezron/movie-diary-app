@@ -1,3 +1,5 @@
+import './global.css';
+
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import {
 	Inter_400Regular,
