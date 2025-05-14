@@ -1,5 +1,4 @@
-import './global.css';
-
+import { AuthProvider } from '@/context/AuthContext';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import {
 	Inter_400Regular,
@@ -9,8 +8,12 @@ import {
 } from '@expo-google-fonts/inter';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import './global.css';
+
+SystemUI.setBackgroundColorAsync('#030712');
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,11 +40,14 @@ export default function RootLayout() {
 
 	return (
 		<View style={{ flex: 1 }}>
-			<Stack screenOptions={{ headerShown: false }}>
-				<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-				<Stack.Screen name='+not-found' />
-			</Stack>
-			<StatusBar style='auto' />
+			<AuthProvider>
+				<Stack screenOptions={{ headerShown: false }}>
+					<Stack.Screen name='index' options={{ headerShown: false }} />
+					<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
+					<Stack.Screen name='+not-found' />
+				</Stack>
+				<StatusBar style='auto' />
+			</AuthProvider>
 		</View>
 	);
 }
