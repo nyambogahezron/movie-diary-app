@@ -1,8 +1,4 @@
-import { sql } from 'drizzle-orm';
-
-export async function up(db) {
-	await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS users (
+ CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
@@ -65,15 +61,3 @@ export async function up(db) {
     CREATE INDEX IF NOT EXISTS idx_watchlist_movies_movie_id ON watchlist_movies (movie_id);
     CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites (user_id);
     CREATE INDEX IF NOT EXISTS idx_favorites_movie_id ON favorites (movie_id);
-  `);
-}
-
-export async function down(db) {
-	await db.execute(sql`
-    DROP TABLE IF EXISTS favorites;
-    DROP TABLE IF EXISTS watchlist_movies;
-    DROP TABLE IF EXISTS watchlists;
-    DROP TABLE IF EXISTS movies;
-    DROP TABLE IF EXISTS users;
-  `);
-}

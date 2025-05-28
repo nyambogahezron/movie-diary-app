@@ -1,4 +1,4 @@
-import { Watchlist } from '../models/Watchlist';
+import { Watchlist } from '../helpers/Watchlist';
 import { IWatchlist, IUser, SearchInput } from '../types';
 import { NotFoundError, ConflictError } from '../utils/errors';
 

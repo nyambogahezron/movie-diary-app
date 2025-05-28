@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
+import { User } from '../helpers/User';
 import { AuthPayload, JwtPayload, User as UserType } from '../types';
 import dotenv from 'dotenv';
 

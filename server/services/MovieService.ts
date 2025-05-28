@@ -1,6 +1,6 @@
-import { Movie } from '../models/Movie';
-import { Favorite } from '../models/Favorite';
-import { Watchlist } from '../models/Watchlist';
+import { Movie } from '../helpers/Movie';
+import { Favorite } from '../helpers/Favorite';
+import { Watchlist } from '../helpers/Watchlist';
 import { Movie as MovieType, User, SearchInput } from '../types';
 
 // Define error classes
