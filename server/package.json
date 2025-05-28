@@ -9,7 +9,8 @@
 		"dev": "nodemon --exec ts-node index.ts",
 		"build": "tsc",
 		"migrate": "ts-node db/migrate.ts",
-		"setup": "npm install && npm run migrate"
+		"setup": "bun install && bun run migrate ",
+		"migrate:dev": "bun drizzle-kit migrate --env dev"
 	},
 	"author": "Hezron Nyamboga",
 	"license": "ISC",

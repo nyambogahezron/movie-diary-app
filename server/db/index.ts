@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Create a database connection
-const dbUrl = process.env.DATABASE_URL || 'file:./movie-diary.db';
+const dbUrl = process.env.DATABASE_URL || 'file:./movie-diary.sqlite3';
 
 // Create SQLite client
 const client = createClient({

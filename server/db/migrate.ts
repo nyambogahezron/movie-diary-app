@@ -32,7 +32,7 @@ if (!fs.existsSync(journalPath)) {
 async function runMigrations() {
 	try {
 		// Create a database connection
-		const dbUrl = process.env.DATABASE_URL || 'file:./movie-diary.db';
+		const dbUrl = process.env.DATABASE_URL || 'file:./db/database.sqlite3';
 		const client = createClient({ url: dbUrl });
 		const db = drizzle(client, { schema });
 
