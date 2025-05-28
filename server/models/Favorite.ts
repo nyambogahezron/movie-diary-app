@@ -1,25 +1,69 @@
-import { Schema, model } from 'mongoose';
-import { IFavorite } from '../types';
+import { db } from '../db';
+import { favorites, movies } from '../db/schema';
+import { eq, and } from 'drizzle-orm';
+import { Favorite as FavoriteType, Movie as MovieType } from '../types';
 
-const favoriteSchema = new Schema<IFavorite>(
-	{
-		user: {
-			type: Schema.Types.ObjectId,
-			ref: 'User',
-			required: [true, 'User reference is required'],
-		},
-		movie: {
-			type: Schema.Types.ObjectId,
-			ref: 'Movie',
-			required: [true, 'Movie reference is required'],
-		},
-	},
-	{
-		timestamps: true,
+export class Favorite {
+	static async create(favoriteData: {
+		userId: number;
+		movieId: number;
+	}): Promise<FavoriteType> {
+		// Check if the movie is already favorited by the user
+		const existingFavorite = await db
+			.select()
+			.from(favorites)
+			.where(eq(favorites.userId, favoriteData.userId))
+			.where(eq(favorites.movieId, favoriteData.movieId));
+
+		if (existingFavorite.length > 0) {
+			return existingFavorite[0] as unknown as FavoriteType;
+		}
+
+		// Insert favorite
+		const result = await db
+			.insert(favorites)
+			.values({
+				userId: favoriteData.userId,
+				movieId: favoriteData.movieId,
+			})
+			.returning();
+
+		return result[0] as unknown as FavoriteType;
 	}
-);
 
-// Compound index to ensure a user can only favorite a movie once
-favoriteSchema.index({ user: 1, movie: 1 }, { unique: true });
+	static async findByUserIdAndMovieId(
+		userId: number,
+		movieId: number
+	): Promise<FavoriteType | undefined> {
+		const result = await db
+			.select()
+			.from(favorites)
+			.where(eq(favorites.userId, userId))
+			.where(eq(favorites.movieId, movieId));
 
-export const Favorite = model<IFavorite>('Favorite', favoriteSchema);
+		return result[0] as unknown as FavoriteType;
+	}
+
+	static async delete(userId: number, movieId: number): Promise<void> {
+		await db
+			.delete(favorites)
+			.where(and(eq(favorites.userId, userId), eq(favorites.movieId, movieId)));
+	}
+
+	static async getFavoriteMoviesByUserId(userId: number): Promise<MovieType[]> {
+		const result = await db
+			.select({
+				movie: movies,
+			})
+			.from(favorites)
+			.innerJoin(movies, eq(favorites.movieId, movies.id))
+			.where(eq(favorites.userId, userId));
+
+		return result.map((r) => r.movie) as unknown as MovieType[];
+	}
+
+	static async isFavorite(userId: number, movieId: number): Promise<boolean> {
+		const favorite = await this.findByUserIdAndMovieId(userId, movieId);
+		return !!favorite;
+	}
+}

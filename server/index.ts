@@ -1,66 +1,41 @@
-import 'reflect-metadata';
-import { config } from 'dotenv';
 import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
-import { buildSchema } from 'type-graphql';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import { AuthResolver } from './graphql/resolvers/AuthResolver';
-import { MovieResolver } from './graphql/resolvers/MovieResolver';
-import { WatchlistResolver } from './graphql/resolvers/WatchlistResolver';
-import { AuthService } from './services/AuthService';
-import { Context } from './types/context';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth';
 
-// Load environment variables
-config();
+// Initialize environment variables
+dotenv.config();
 
+// Create Express app
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
-app.use(helmet());
-app.use(morgan('dev'));
 app.use(express.json());
+app.use(cors());
 
-// Connect to MongoDB
-mongoose
-	.connect(process.env.MONGODB_URI!, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-	})
-	.then(() => console.log('Connected to MongoDB'))
-	.catch((err) => console.error('MongoDB connection error:', err));
+// Routes
+app.use('/api/auth', authRoutes);
 
-async function startServer() {
-	// Build GraphQL schema
-	const schema = await buildSchema({
-		resolvers: [AuthResolver, MovieResolver, WatchlistResolver],
-		emitSchemaFile: true,
-		validate: false,
-	});
+// Health check route
+app.get('/health', (_req, res) => {
+	res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
 
-	// Create Apollo Server
-	const server = new ApolloServer({
-		schema,
-		context: async ({ req }): Promise<Context> => {
-			const token = req.headers.authorization?.replace('Bearer ', '');
-			const user = token ? await AuthService.verifyToken(token) : undefined;
-			return { req, user };
-		},
-	});
+// Error handling middleware
+app.use(
+	(
+		err: Error,
+		_req: express.Request,
+		res: express.Response,
+		_next: express.NextFunction
+	) => {
+		console.error('Unhandled error:', err);
+		res.status(500).json({ error: 'Internal server error' });
+	}
+);
 
-	await server.start();
-	server.applyMiddleware({ app });
-
-	const PORT = process.env.PORT || 4000;
-	app.listen(PORT, () => {
-		console.log(`Server running on http://localhost:${PORT}`);
-		console.log(
-			`GraphQL endpoint: http://localhost:${PORT}${server.graphqlPath}`
-		);
-	});
-}
-
-startServer().catch((err) => console.error('Error starting server:', err));
+// Start the server
+app.listen(PORT, () => {
+	console.log(`Server is running on port ${PORT}`);
+});

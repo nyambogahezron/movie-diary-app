@@ -1,61 +1,110 @@
-import { Document, Types } from 'mongoose';
-
-export interface IUser extends Document {
-	_id: Types.ObjectId;
+// Types for the application entities
+export interface User {
+	id: number;
 	username: string;
 	email: string;
 	password: string;
-	avatar?: string;
-	createdAt: Date;
-	updatedAt: Date;
-	comparePassword(candidatePassword: string): Promise<boolean>;
+	avatar?: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
-export interface IMovie extends Document {
-	_id: Types.ObjectId;
+// Keeping IUser for backward compatibility
+export interface IUser {
+	id: number;
+	username: string;
+	email: string;
+	password: string;
+	avatar?: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface Movie {
+	id: number;
 	title: string;
 	tmdbId: string;
-	posterPath?: string;
-	releaseDate?: Date;
-	overview?: string;
-	rating?: number;
-	watchDate?: Date;
-	review?: string;
-	genres?: string[];
-	user: Types.ObjectId;
-	createdAt: Date;
-	updatedAt: Date;
+	posterPath?: string | null;
+	releaseDate?: string | null;
+	overview?: string | null;
+	rating?: number | null;
+	watchDate?: string | null;
+	review?: string | null;
+	genres?: string | null; // JSON string of genres
+	userId: number;
+	createdAt: string;
+	updatedAt: string;
 }
 
-export interface IWatchlist extends Document {
-	_id: Types.ObjectId;
-	user: Types.ObjectId;
-	movies: Types.ObjectId[];
+export interface IMovie {
+	id: number;
+	title: string;
+	tmdbId: string;
+	posterPath?: string | null;
+	releaseDate?: string | null;
+	overview?: string | null;
+	rating?: number | null;
+	watchDate?: string | null;
+	review?: string | null;
+	genres?: string | null; // JSON string of genres
+	userId: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface Watchlist {
+	id: number;
+	userId: number;
 	name: string;
-	description?: string;
+	description?: string | null;
 	isPublic: boolean;
-	createdAt: Date;
-	updatedAt: Date;
+	createdAt: string;
+	updatedAt: string;
 }
 
-export interface IFavorite extends Document {
-	_id: Types.ObjectId;
-	user: Types.ObjectId;
-	movie: Types.ObjectId;
-	createdAt: Date;
+export interface IWatchlist {
+	id: number;
+	userId: number;
+	name: string;
+	description?: string | null;
+	isPublic: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface WatchlistMovie {
+	id: number;
+	watchlistId: number;
+	movieId: number;
+	createdAt: string;
+}
+
+export interface Favorite {
+	id: number;
+	userId: number;
+	movieId: number;
+	createdAt: string;
+}
+
+export interface IFavorite {
+	id: number;
+	userId: number;
+	movieId: number;
+	createdAt: string;
 }
 
 export interface AuthPayload {
 	token: string;
-	user: IUser;
+	user: User;
 }
 
 export interface JwtPayload {
-	userId: string;
+	userId: number;
 	iat?: number;
 	exp?: number;
 }
 
+// API request query parameter types
 export interface PaginationInput {
 	limit?: number;
 	offset?: number;

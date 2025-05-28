@@ -1,7 +1,18 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
-import { IUser, AuthPayload, JwtPayload } from '../types';
-import { AuthenticationError } from '../utils/errors';
+import { AuthPayload, JwtPayload, User as UserType } from '../types';
+import dotenv from 'dotenv';
+
+// Initialize environment variables
+dotenv.config();
+
+// Define a custom error for authentication issues
+export class AuthenticationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'AuthenticationError';
+	}
+}
 
 export class AuthService {
 	private static readonly JWT_SECRET =
@@ -12,15 +23,20 @@ export class AuthService {
 		email: string,
 		password: string
 	): Promise<AuthPayload> {
-		// Check if user already exists
-		const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-		if (existingUser) {
-			throw new AuthenticationError('User already exists');
+		// Check if user already exists with this email
+		const existingUserByEmail = await User.findByEmail(email);
+		if (existingUserByEmail) {
+			throw new AuthenticationError('Email is already registered');
+		}
+
+		// Check if user already exists with this username
+		const existingUserByUsername = await User.findByUsername(username);
+		if (existingUserByUsername) {
+			throw new AuthenticationError('Username is already taken');
 		}
 
 		// Create new user
-		const user = new User({ username, email, password });
-		await user.save();
+		const user = await User.create({ username, email, password });
 
 		// Generate token
 		const token = this.generateToken(user);
@@ -29,15 +45,15 @@ export class AuthService {
 	}
 
 	static async login(email: string, password: string): Promise<AuthPayload> {
-		// Find user
-		const user = await User.findOne({ email });
+		// Find user by email
+		const user = await User.findByEmail(email);
 		if (!user) {
 			throw new AuthenticationError('Invalid credentials');
 		}
 
-		// Check password
-		const isValid = await user.comparePassword(password);
-		if (!isValid) {
+		// Verify password
+		const isPasswordValid = await User.comparePassword(user.password, password);
+		if (!isPasswordValid) {
 			throw new AuthenticationError('Invalid credentials');
 		}
 
@@ -47,9 +63,12 @@ export class AuthService {
 		return { token, user };
 	}
 
-	static async verifyToken(token: string): Promise<IUser> {
+	static async verifyToken(token: string): Promise<UserType> {
 		try {
+			// Verify and decode the token
 			const decoded = jwt.verify(token, this.JWT_SECRET) as JwtPayload;
+
+			// Find user by ID from token
 			const user = await User.findById(decoded.userId);
 
 			if (!user) {
@@ -58,11 +77,11 @@ export class AuthService {
 
 			return user;
 		} catch (error) {
-			throw new AuthenticationError('Invalid token');
+			throw new AuthenticationError('Invalid or expired token');
 		}
 	}
 
-	private static generateToken(user: IUser): string {
-		return jwt.sign({ userId: user._id }, this.JWT_SECRET, { expiresIn: '7d' });
+	private static generateToken(user: UserType): string {
+		return jwt.sign({ userId: user.id }, this.JWT_SECRET, { expiresIn: '7d' });
 	}
 }

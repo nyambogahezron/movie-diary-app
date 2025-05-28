@@ -1,147 +1,162 @@
 import { Movie } from '../models/Movie';
 import { Favorite } from '../models/Favorite';
 import { Watchlist } from '../models/Watchlist';
-import { IMovie, IUser, SearchInput } from '../types';
-import { NotFoundError, AuthorizationError } from '../utils/errors';
+import { Movie as MovieType, User, SearchInput } from '../types';
+
+// Define error classes
+export class NotFoundError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'NotFoundError';
+	}
+}
+
+export class AuthorizationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'AuthorizationError';
+	}
+}
 
 export class MovieService {
-	static async addMovie(input: Partial<IMovie>, user: IUser): Promise<IMovie> {
-		const movie = new Movie({
+	static async addMovie(
+		input: {
+			title: string;
+			tmdbId: string;
+			posterPath?: string;
+			releaseDate?: string;
+			overview?: string;
+			rating?: number;
+			watchDate?: string;
+			review?: string;
+			genres?: string[];
+		},
+		user: User
+	): Promise<MovieType> {
+		// Check if movie with this tmdbId already exists for this user
+		const existingMovie = await Movie.findByTmdbId(input.tmdbId, user.id);
+
+		if (existingMovie) {
+			// If it exists, update it
+			await Movie.update(existingMovie.id, input);
+			return Movie.findById(existingMovie.id) as Promise<MovieType>;
+		}
+
+		// If not, create a new one
+		return Movie.create({
 			...input,
-			user: user._id,
+			userId: user.id,
 		});
-		await movie.save();
-		return movie.populate('user');
 	}
 
 	static async updateMovie(
-		id: string,
-		input: Partial<IMovie>,
-		user: IUser
-	): Promise<IMovie> {
-		const movie = await Movie.findOne({ _id: id, user: user._id });
+		id: number,
+		input: Partial<MovieType>,
+		user: User
+	): Promise<MovieType> {
+		// Get the movie and check if it belongs to the user
+		const movie = await Movie.findById(id);
+
 		if (!movie) {
 			throw new NotFoundError('Movie not found');
 		}
 
-		Object.assign(movie, input);
-		await movie.save();
-		return movie.populate('user');
+		if (movie.userId !== user.id) {
+			throw new AuthorizationError(
+				'You do not have permission to update this movie'
+			);
+		}
 	}
 
-	static async deleteMovie(id: string, user: IUser): Promise<boolean> {
-		const movie = await Movie.findOneAndDelete({ _id: id, user: user._id });
+	static async deleteMovie(id: number, user: User): Promise<void> {
+		// Get the movie and check if it belongs to the user
+		const movie = await Movie.findById(id);
+
 		if (!movie) {
 			throw new NotFoundError('Movie not found');
 		}
 
-		// Remove from favorites and watchlists
-		await Promise.all([
-			Favorite.deleteMany({ movie: id }),
-			Watchlist.updateMany({ movies: id }, { $pull: { movies: id } }),
-		]);
+		if (movie.userId !== user.id) {
+			throw new AuthorizationError(
+				'You do not have permission to delete this movie'
+			);
+		}
 
-		return true;
+		// Delete the movie
+		await Movie.delete(id);
 	}
 
-	static async getMovie(id: string, user: IUser): Promise<IMovie> {
-		const movie = await Movie.findOne({ _id: id, user: user._id }).populate(
-			'user'
+	static async getMovie(
+		id: number,
+		user: User
+	): Promise<MovieType & { isFavorite: boolean }> {
+		// Get the movie
+		const movie = await Movie.findById(id);
+
+		if (!movie) {
+			throw new NotFoundError('Movie not found');
+		}
+
+		// Check if the movie belongs to the user or is public
+		if (movie.userId !== user.id) {
+			throw new AuthorizationError(
+				'You do not have permission to view this movie'
+			);
+		}
+
+		// Check if the movie is a favorite
+		const isFavorite = await Favorite.isFavorite(user.id, movie.id);
+
+		return {
+			...movie,
+			isFavorite,
+		};
+	}
+
+	static async getUserMovies(
+		user: User,
+		params?: SearchInput
+	): Promise<MovieType[]> {
+		// Get all movies for the user
+		return Movie.findByUserId(user.id, params);
+	}
+
+	static async toggleFavorite(
+		movieId: number,
+		user: User
+	): Promise<{ isFavorite: boolean }> {
+		// Check if the movie exists and belongs to the user
+		const movie = await Movie.findById(movieId);
+
+		if (!movie) {
+			throw new NotFoundError('Movie not found');
+		}
+
+		if (movie.userId !== user.id) {
+			throw new AuthorizationError(
+				'You do not have permission to favorite this movie'
+			);
+		}
+
+		// Check if it's already a favorite
+		const existingFavorite = await Favorite.findByUserIdAndMovieId(
+			user.id,
+			movieId
 		);
-		if (!movie) {
-			throw new NotFoundError('Movie not found');
-		}
-		return movie;
-	}
 
-	static async getMovies(input: SearchInput, user: IUser): Promise<IMovie[]> {
-		const {
-			limit = 10,
-			offset = 0,
-			search,
-			sortBy = 'createdAt',
-			sortOrder = 'desc',
-		} = input;
-
-		const query: any = { user: user._id };
-		if (search) {
-			query.$text = { $search: search };
-		}
-
-		return Movie.find(query)
-			.sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
-			.skip(offset)
-			.limit(limit)
-			.populate('user');
-	}
-
-	static async toggleFavorite(movieId: string, user: IUser): Promise<boolean> {
-		const movie = await Movie.findOne({ _id: movieId });
-		if (!movie) {
-			throw new NotFoundError('Movie not found');
-		}
-
-		const favorite = await Favorite.findOne({ movie: movieId, user: user._id });
-		if (favorite) {
-			await favorite.deleteOne();
-			return false;
-		}
-
-		await new Favorite({ movie: movieId, user: user._id }).save();
-		return true;
-	}
-
-	static async getFavorites(
-		user: IUser,
-		input: SearchInput
-	): Promise<IMovie[]> {
-		const { limit = 10, offset = 0 } = input;
-
-		const favorites = await Favorite.find({ user: user._id })
-			.sort({ createdAt: -1 })
-			.skip(offset)
-			.limit(limit)
-			.populate({
-				path: 'movie',
-				populate: { path: 'user' },
-			});
-
-		return favorites.map((fav) => fav.movie as IMovie);
-	}
-
-	static async addToWatchlist(
-		movieId: string,
-		watchlistId: string,
-		user: IUser
-	): Promise<void> {
-		const [movie, watchlist] = await Promise.all([
-			Movie.findOne({ _id: movieId }),
-			Watchlist.findOne({ _id: watchlistId, user: user._id }),
-		]);
-
-		if (!movie) throw new NotFoundError('Movie not found');
-		if (!watchlist) throw new NotFoundError('Watchlist not found');
-
-		if (!watchlist.movies.includes(movieId)) {
-			watchlist.movies.push(movieId);
-			await watchlist.save();
+		if (existingFavorite) {
+			// If it's already a favorite, remove it
+			await Favorite.delete(user.id, movieId);
+			return { isFavorite: false };
+		} else {
+			// If it's not a favorite, add it
+			await Favorite.create({ userId: user.id, movieId });
+			return { isFavorite: true };
 		}
 	}
 
-	static async removeFromWatchlist(
-		movieId: string,
-		watchlistId: string,
-		user: IUser
-	): Promise<void> {
-		const watchlist = await Watchlist.findOne({
-			_id: watchlistId,
-			user: user._id,
-		});
-		if (!watchlist) throw new NotFoundError('Watchlist not found');
-
-		watchlist.movies = watchlist.movies.filter(
-			(id) => id.toString() !== movieId
-		);
-		await watchlist.save();
+	static async getFavorites(user: User): Promise<MovieType[]> {
+		// Get all favorite movies for the user
+		return Favorite.getFavoriteMoviesByUserId(user.id);
 	}
 }

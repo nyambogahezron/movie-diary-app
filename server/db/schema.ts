@@ -1,0 +1,85 @@
+import { sql } from 'drizzle-orm';
+import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+// Users table
+export const users = sqliteTable('users', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	username: text('username').notNull().unique(),
+	email: text('email').notNull().unique(),
+	password: text('password').notNull(),
+	avatar: text('avatar'),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// Movies table
+export const movies = sqliteTable('movies', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	title: text('title').notNull(),
+	tmdbId: text('tmdb_id').notNull(),
+	posterPath: text('poster_path'),
+	releaseDate: text('release_date'),
+	overview: text('overview'),
+	rating: integer('rating'),
+	watchDate: text('watch_date'),
+	review: text('review'),
+	genres: text('genres'), // Will store as JSON string
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// Watchlists table
+export const watchlists = sqliteTable('watchlists', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	name: text('name').notNull(),
+	description: text('description'),
+	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(false),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// WatchlistMovies junction table
+export const watchlistMovies = sqliteTable('watchlist_movies', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	watchlistId: integer('watchlist_id')
+		.notNull()
+		.references(() => watchlists.id, { onDelete: 'cascade' }),
+	movieId: integer('movie_id')
+		.notNull()
+		.references(() => movies.id, { onDelete: 'cascade' }),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// Favorites table
+export const favorites = sqliteTable('favorites', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	movieId: integer('movie_id')
+		.notNull()
+		.references(() => movies.id, { onDelete: 'cascade' }),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
