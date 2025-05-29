@@ -83,3 +83,23 @@ export const favorites = sqliteTable('favorites', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 });
+
+// MovieReviews table
+export const movieReviews = sqliteTable('movie_reviews', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	movieId: integer('movie_id')
+		.notNull()
+		.references(() => movies.id, { onDelete: 'cascade' }),
+	content: text('content').notNull(),
+	rating: integer('rating'), // Optional rating for the review (1-5 or 1-10)
+	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(true),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});

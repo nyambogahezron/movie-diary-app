@@ -140,3 +140,39 @@ export interface SortInput {
 export interface SearchInput extends PaginationInput, SortInput {
 	search?: string;
 }
+
+// Movie Review interfaces
+export interface MovieReview {
+	id: number;
+	userId: number;
+	movieId: number;
+	content: string;
+	rating?: number | null;
+	isPublic: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Input type for creating/updating movie reviews
+export interface MovieReviewInput {
+	content: string;
+	rating?: number | null;
+	isPublic?: boolean;
+	userId?: number;
+	movieId?: number;
+}
+
+// Extended movie review with user and movie data
+export interface MovieReviewWithDetails extends MovieReview {
+	user?: {
+		id: number;
+		username: string;
+		avatar?: string | null;
+	};
+	movie?: {
+		id: number;
+		title: string;
+		posterPath?: string | null;
+		releaseDate?: string | null;
+	};
+}
