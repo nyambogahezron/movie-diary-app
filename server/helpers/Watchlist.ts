@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { watchlists, watchlistMovies, movies } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, asc, like, SQL } from 'drizzle-orm';
 import { Watchlist as WatchlistType, Movie as MovieType } from '../types';
 import { SearchInput } from '../types';
 

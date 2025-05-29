@@ -76,6 +76,14 @@ export interface Watchlist {
 	updatedAt: string;
 }
 
+// Input type for creating/updating watchlists
+export interface WatchlistInput {
+	name: string;
+	description?: string | null;
+	isPublic?: boolean;
+	userId?: number;
+}
+
 export interface IWatchlist {
 	id: number;
 	userId: number;

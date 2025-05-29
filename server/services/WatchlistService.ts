@@ -1,125 +1,178 @@
 import { Watchlist } from '../helpers/Watchlist';
-import { IWatchlist, IUser, SearchInput } from '../types';
-import { NotFoundError, ConflictError } from '../utils/errors';
+import { Movie } from '../helpers/Movie';
+import { Watchlist as WatchlistType, WatchlistInput, Movie as MovieType, User, SearchInput } from '../types';
+import { AuthorizationError, NotFoundError, ConflictError, ValidationError } from '../utils/errors';
 
 export class WatchlistService {
-	static async createWatchlist(
-		name: string,
-		user: IUser,
-		description?: string,
-		isPublic: boolean = false
-	): Promise<IWatchlist> {
-		const existingWatchlist = await Watchlist.findOne({ user: user._id, name });
-		if (existingWatchlist) {
-			throw new ConflictError('Watchlist with this name already exists');
-		}
+  static async createWatchlist(
+    input: WatchlistInput,
+    user: User
+  ): Promise<WatchlistType> {
+    try {
+      return await Watchlist.create({
+        name: input.name,
+        description: input.description,
+        isPublic: input.isPublic ?? false,
+        userId: user.id
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('already exists')) {
+        throw new ConflictError('A watchlist with this name already exists');
+      }
+      throw error;
+    }
+  }
 
-		const watchlist = new Watchlist({
-			name,
-			user: user._id,
-			description,
-			isPublic,
-			movies: [],
-		});
+  static async getWatchlists(user: User): Promise<WatchlistType[]> {
+    return Watchlist.findByUserId(user.id);
+  }
 
-		await watchlist.save();
-		return watchlist.populate('user');
-	}
+  static async getWatchlist(
+    id: number, 
+    user: User
+  ): Promise<WatchlistType & { movies?: MovieType[] }> {
+    const watchlist = await Watchlist.findById(id);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
 
-	static async updateWatchlist(
-		id: string,
-		user: IUser,
-		updates: Partial<IWatchlist>
-	): Promise<IWatchlist> {
-		const watchlist = await Watchlist.findOne({ _id: id, user: user._id });
-		if (!watchlist) {
-			throw new NotFoundError('Watchlist not found');
-		}
+    // Check if the user can access this watchlist
+    if (watchlist.userId !== user.id && !watchlist.isPublic) {
+      throw new AuthorizationError(
+        'You do not have permission to view this watchlist'
+      );
+    }
 
-		if (updates.name && updates.name !== watchlist.name) {
-			const existingWatchlist = await Watchlist.findOne({
-				user: user._id,
-				name: updates.name,
-			});
-			if (existingWatchlist) {
-				throw new ConflictError('Watchlist with this name already exists');
-			}
-		}
+    // Get movies in this watchlist
+    const movies = await Watchlist.getMovies(id);
+    
+    return {
+      ...watchlist,
+      movies
+    };
+  }
 
-		Object.assign(watchlist, updates);
-		await watchlist.save();
-		return watchlist.populate('user');
-	}
+  static async updateWatchlist(
+    id: number,
+    input: Partial<WatchlistType>,
+    user: User
+  ): Promise<WatchlistType> {
+    const watchlist = await Watchlist.findById(id);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
+    
+    if (watchlist.userId !== user.id) {
+      throw new AuthorizationError(
+        'You do not have permission to update this watchlist'
+      );
+    }
 
-	static async deleteWatchlist(id: string, user: IUser): Promise<boolean> {
-		const watchlist = await Watchlist.findOneAndDelete({
-			_id: id,
-			user: user._id,
-		});
-		if (!watchlist) {
-			throw new NotFoundError('Watchlist not found');
-		}
-		return true;
-	}
+    // Update the watchlist
+    await Watchlist.update(id, input);
+    
+    // Return the updated watchlist
+    const updated = await Watchlist.findById(id);
+    if (!updated) {
+      throw new NotFoundError('Updated watchlist not found');
+    }
+    
+    return updated;
+  }
 
-	static async getWatchlist(id: string, user: IUser): Promise<IWatchlist> {
-		const watchlist = await Watchlist.findOne({
-			_id: id,
-			$or: [{ user: user._id }, { isPublic: true }],
-		}).populate(['user', 'movies']);
+  static async deleteWatchlist(id: number, user: User): Promise<void> {
+    const watchlist = await Watchlist.findById(id);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
+    
+    if (watchlist.userId !== user.id) {
+      throw new AuthorizationError(
+        'You do not have permission to delete this watchlist'
+      );
+    }
 
-		if (!watchlist) {
-			throw new NotFoundError('Watchlist not found');
-		}
+    // Delete the watchlist
+    await Watchlist.delete(id);
+  }
 
-		return watchlist;
-	}
+  static async getPublicWatchlists(params?: SearchInput): Promise<WatchlistType[]> {
+    return Watchlist.findPublic(params);
+  }
 
-	static async getUserWatchlists(
-		user: IUser,
-		input: SearchInput
-	): Promise<IWatchlist[]> {
-		const { limit = 10, offset = 0 } = input;
+  static async addMovieToWatchlist(
+    watchlistId: number,
+    movieId: number,
+    user: User
+  ): Promise<void> {
+    // Check if the watchlist exists and belongs to the user
+    const watchlist = await Watchlist.findById(watchlistId);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
+    
+    if (watchlist.userId !== user.id) {
+      throw new AuthorizationError(
+        'You do not have permission to modify this watchlist'
+      );
+    }
 
-		return Watchlist.find({ user: user._id })
-			.sort({ createdAt: -1 })
-			.skip(offset)
-			.limit(limit)
-			.populate(['user', 'movies']);
-	}
+    // Check if the movie exists
+    const movie = await Movie.findById(movieId);
+    
+    if (!movie) {
+      throw new NotFoundError('Movie not found');
+    }
 
-	static async getPublicWatchlists(input: SearchInput): Promise<IWatchlist[]> {
-		const { limit = 10, offset = 0 } = input;
+    // Add the movie to the watchlist
+    await Watchlist.addMovie(watchlistId, movieId);
+  }
 
-		return Watchlist.find({ isPublic: true })
-			.sort({ createdAt: -1 })
-			.skip(offset)
-			.limit(limit)
-			.populate(['user', 'movies']);
-	}
+  static async removeMovieFromWatchlist(
+    watchlistId: number,
+    movieId: number,
+    user: User
+  ): Promise<void> {
+    // Check if the watchlist exists and belongs to the user
+    const watchlist = await Watchlist.findById(watchlistId);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
+    
+    if (watchlist.userId !== user.id) {
+      throw new AuthorizationError(
+        'You do not have permission to modify this watchlist'
+      );
+    }
 
-	static async reorderMovies(
-		id: string,
-		user: IUser,
-		movieIds: string[]
-	): Promise<IWatchlist> {
-		const watchlist = await Watchlist.findOne({ _id: id, user: user._id });
-		if (!watchlist) {
-			throw new NotFoundError('Watchlist not found');
-		}
+    // Remove the movie from the watchlist
+    await Watchlist.removeMovie(watchlistId, movieId);
+  }
 
-		// Verify all movies exist in the watchlist
-		const existingMovies = new Set(watchlist.movies.map((id) => id.toString()));
-		const allMoviesExist = movieIds.every((id) => existingMovies.has(id));
+  static async getWatchlistMovies(
+    watchlistId: number, 
+    user: User,
+    params?: SearchInput
+  ): Promise<MovieType[]> {
+    const watchlist = await Watchlist.findById(watchlistId);
+    
+    if (!watchlist) {
+      throw new NotFoundError('Watchlist not found');
+    }
+    
+    // Check if the user can access this watchlist
+    if (watchlist.userId !== user.id && !watchlist.isPublic) {
+      throw new AuthorizationError(
+        'You do not have permission to view this watchlist'
+      );
+    }
 
-		if (!allMoviesExist) {
-			throw new ValidationError(
-				'Invalid movie order: some movies do not exist in the watchlist'
-			);
-		}
-
-		watchlist.movies = movieIds;
-		await watchlist.save();
-		return watchlist.populate(['user', 'movies']);
-	}
+    return Watchlist.getMovies(watchlistId, params);
+  }
+}
 }
