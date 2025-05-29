@@ -153,8 +153,42 @@ export class MovieService {
 		}
 	}
 
-	static async getFavorites(user: User): Promise<MovieType[]> {
+	static async getFavorites(
+		user: User,
+		params?: SearchInput
+	): Promise<MovieType[]> {
 		// Get all favorite movies for the user
-		return Favorite.getFavoriteMoviesByUserId(user.id);
+		let movies = await Favorite.getFavoriteMoviesByUserId(user.id);
+
+		// Apply search filter if provided
+		if (params?.search) {
+			const searchTerm = params.search.toLowerCase();
+			movies = movies.filter(
+				(movie) =>
+					movie.title.toLowerCase().includes(searchTerm) ||
+					(movie.overview && movie.overview.toLowerCase().includes(searchTerm))
+			);
+		}
+
+		// Apply sorting if provided
+		if (params?.sortBy) {
+			const sortField = params.sortBy as keyof MovieType;
+			const sortOrder = params?.sortOrder === 'desc' ? -1 : 1;
+
+			movies.sort((a, b) => {
+				if (a[sortField] < b[sortField]) return -1 * sortOrder;
+				if (a[sortField] > b[sortField]) return 1 * sortOrder;
+				return 0;
+			});
+		}
+
+		// Apply pagination if provided
+		if (params?.offset !== undefined || params?.limit !== undefined) {
+			const offset = params?.offset || 0;
+			const limit = params?.limit || movies.length;
+			movies = movies.slice(offset, offset + limit);
+		}
+
+		return movies;
 	}
 }

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { MovieService } from '../services/MovieService';
+import { FavoriteService } from '../services/FavoriteService';
 import { SearchInput, MovieInput } from '../types';
 
 export class MovieController {
@@ -239,7 +240,7 @@ export class MovieController {
 		}
 	}
 
-	// Toggle movie favorite status
+	// Toggle favorite status of a movie
 	static async toggleFavorite(req: Request, res: Response): Promise<void> {
 		try {
 			// Check authentication
@@ -256,14 +257,27 @@ export class MovieController {
 			}
 
 			try {
-				const result = await MovieService.toggleFavorite(movieId, req.user);
+				// Check if movie exists
+				const movie = await MovieService.getMovie(movieId, req.user);
 
-				res.status(200).json({
-					message: result.isFavorite
-						? 'Movie added to favorites'
-						: 'Movie removed from favorites',
-					data: result,
-				});
+				// Check if already favorited
+				const isFavorite = await FavoriteService.isFavorite(movieId, req.user);
+
+				if (isFavorite) {
+					// If already favorited, remove from favorites
+					await FavoriteService.removeFavorite(movieId, req.user);
+					res.status(200).json({
+						message: 'Movie removed from favorites',
+						data: { isFavorite: false },
+					});
+				} else {
+					// If not favorited, add to favorites
+					await FavoriteService.addFavorite(movieId, req.user);
+					res.status(200).json({
+						message: 'Movie added to favorites',
+						data: { isFavorite: true },
+					});
+				}
 			} catch (error) {
 				if ((error as Error).name === 'NotFoundError') {
 					res.status(404).json({ error: (error as Error).message });
@@ -278,14 +292,14 @@ export class MovieController {
 				throw error;
 			}
 		} catch (error) {
-			console.error('Error toggling favorite:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while updating favorite status' });
+			console.error('Error toggling favorite status:', error);
+			res.status(500).json({
+				error: 'An error occurred while toggling favorite status',
+			});
 		}
 	}
 
-	// Get user's favorite movies
+	// Get all favorites for the current user
 	static async getFavorites(req: Request, res: Response): Promise<void> {
 		try {
 			// Check authentication
@@ -294,7 +308,30 @@ export class MovieController {
 				return;
 			}
 
-			const favorites = await MovieService.getFavorites(req.user);
+			// Parse search, sort and pagination parameters
+			const searchParams: SearchInput = {};
+
+			if (req.query.search) {
+				searchParams.search = req.query.search as string;
+			}
+
+			if (req.query.sortBy) {
+				searchParams.sortBy = req.query.sortBy as string;
+			}
+
+			if (req.query.sortOrder) {
+				searchParams.sortOrder = req.query.sortOrder as 'asc' | 'desc';
+			}
+
+			if (req.query.limit) {
+				searchParams.limit = parseInt(req.query.limit as string, 10);
+			}
+
+			if (req.query.offset) {
+				searchParams.offset = parseInt(req.query.offset as string, 10);
+			}
+
+			const favorites = await MovieService.getFavorites(req.user, searchParams);
 
 			res.status(200).json({
 				message: 'Favorite movies retrieved successfully',

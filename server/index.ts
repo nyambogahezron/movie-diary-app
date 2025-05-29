@@ -5,6 +5,7 @@ import authRoutes from './routes/auth';
 import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlists';
 import watchlistMoviesRoutes from './routes/watchlistMovies';
+import favoriteRoutes from './routes/favorites';
 
 // Initialize environment variables
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(cors());
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/watchlists', watchlistRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Health check route
 app.get('/health', (_req, res) => {
