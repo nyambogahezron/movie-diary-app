@@ -36,6 +36,20 @@ export interface Movie {
 	updatedAt: string;
 }
 
+// Input type for creating/updating movies
+export interface MovieInput {
+	title: string;
+	tmdbId: string;
+	posterPath?: string | null;
+	releaseDate?: string | null;
+	overview?: string | null;
+	rating?: number | null;
+	watchDate?: string | null;
+	review?: string | null;
+	genres?: string[]; // Array of genre strings
+	userId?: number;
+}
+
 export interface IMovie {
 	id: number;
 	title: string;

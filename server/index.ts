@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
+import movieRoutes from './routes/movies';
 
 // Initialize environment variables
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/movies', movieRoutes);
 
 // Health check route
 app.get('/health', (_req, res) => {

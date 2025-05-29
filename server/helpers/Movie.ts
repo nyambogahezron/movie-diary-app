@@ -1,22 +1,12 @@
 import { db } from '../db';
 import { movies } from '../db/schema';
 import { eq, like, desc, asc } from 'drizzle-orm';
-import { Movie as MovieType } from '../types';
-import { SearchInput } from '../types';
+import { Movie as MovieType, MovieInput, SearchInput } from '../types';
 
 export class Movie {
-	static async create(movieData: {
-		title: string;
-		tmdbId: string;
-		posterPath?: string;
-		releaseDate?: string;
-		overview?: string;
-		rating?: number;
-		watchDate?: string;
-		review?: string;
-		genres?: string[];
-		userId: number;
-	}): Promise<MovieType> {
+	static async create(
+		movieData: MovieInput & { userId: number }
+	): Promise<MovieType> {
 		// Convert genres array to JSON string if provided
 		const genresJson = movieData.genres
 			? JSON.stringify(movieData.genres)
@@ -108,17 +98,20 @@ export class Movie {
 
 	static async update(
 		id: number,
-		movieData: Partial<MovieType>
+		movieData: Partial<MovieInput>
 	): Promise<void> {
+		// Create a copy of the data to modify
+		const dataToUpdate = { ...movieData };
+
 		// Convert genres array to JSON string if provided
-		if (Array.isArray(movieData.genres)) {
-			movieData.genres = JSON.stringify(movieData.genres);
+		if (Array.isArray(dataToUpdate.genres)) {
+			dataToUpdate.genres = JSON.stringify(dataToUpdate.genres);
 		}
 
 		await db
 			.update(movies)
 			.set({
-				...movieData,
+				...dataToUpdate,
 				updatedAt: new Date().toISOString(),
 			})
 			.where(eq(movies.id, id));

@@ -1,7 +1,7 @@
 import { Movie } from '../helpers/Movie';
 import { Favorite } from '../helpers/Favorite';
 import { Watchlist } from '../helpers/Watchlist';
-import { Movie as MovieType, User, SearchInput } from '../types';
+import { Movie as MovieType, MovieInput, User, SearchInput } from '../types';
 
 // Define error classes
 export class NotFoundError extends Error {
@@ -19,20 +19,7 @@ export class AuthorizationError extends Error {
 }
 
 export class MovieService {
-	static async addMovie(
-		input: {
-			title: string;
-			tmdbId: string;
-			posterPath?: string;
-			releaseDate?: string;
-			overview?: string;
-			rating?: number;
-			watchDate?: string;
-			review?: string;
-			genres?: string[];
-		},
-		user: User
-	): Promise<MovieType> {
+	static async addMovie(input: MovieInput, user: User): Promise<MovieType> {
 		// Check if movie with this tmdbId already exists for this user
 		const existingMovie = await Movie.findByTmdbId(input.tmdbId, user.id);
 
@@ -51,7 +38,7 @@ export class MovieService {
 
 	static async updateMovie(
 		id: number,
-		input: Partial<MovieType>,
+		input: Partial<MovieInput>,
 		user: User
 	): Promise<MovieType> {
 		// Get the movie and check if it belongs to the user
@@ -66,6 +53,17 @@ export class MovieService {
 				'You do not have permission to update this movie'
 			);
 		}
+
+		// Update the movie
+		await Movie.update(id, input);
+
+		// Return the updated movie
+		const updated = await Movie.findById(id);
+		if (!updated) {
+			throw new NotFoundError('Updated movie not found');
+		}
+
+		return updated;
 	}
 
 	static async deleteMovie(id: number, user: User): Promise<void> {
