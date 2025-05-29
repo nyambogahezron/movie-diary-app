@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlists';
+import watchlistMoviesRoutes from './routes/watchlistMovies';
 
 // Initialize environment variables
 dotenv.config();
