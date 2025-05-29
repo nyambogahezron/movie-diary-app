@@ -4,7 +4,9 @@
 	"description": "movie diary server",
 	"main": "index.ts",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
 		"start": "ts-node index.ts",
 		"dev": "nodemon --exec ts-node index.ts",
 		"build": "tsc",
@@ -32,6 +34,11 @@
 		"typescript": "^5.8.3"
 	},
 	"devDependencies": {
-		"drizzle-kit": "^0.31.1"
+		"@types/jest": "^29.5.14",
+		"@types/supertest": "^6.0.3",
+		"drizzle-kit": "^0.31.1",
+		"jest": "^29.7.0",
+		"supertest": "^7.1.1",
+		"ts-jest": "^29.3.4"
 	}
 }

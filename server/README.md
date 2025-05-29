@@ -89,3 +89,8 @@ Authorization: Bearer <your-token>
 ## Error Handling
 
 The API uses standard GraphQL error handling. All errors are returned in the standard GraphQL error format with appropriate error messages.
+
+# Test
+
+// bun run test -- -t "AuthController" # Run only AuthController tests
+// bun run test -- --coverage # Run tests with coverage report
