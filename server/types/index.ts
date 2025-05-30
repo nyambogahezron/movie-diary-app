@@ -5,6 +5,7 @@ export interface User {
 	email: string;
 	password: string;
 	avatar?: string | null;
+	role?: string;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -16,6 +17,7 @@ export interface IUser {
 	email: string;
 	password: string;
 	avatar?: string | null;
+	role?: string;
 	createdAt: string;
 	updatedAt: string;
 }
