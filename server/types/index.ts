@@ -163,17 +163,69 @@ export interface MovieReviewInput {
 	movieId?: number;
 }
 
-// Extended movie review with user and movie data
-export interface MovieReviewWithDetails extends MovieReview {
-	user?: {
-		id: number;
-		username: string;
-		avatar?: string | null;
-	};
-	movie?: {
-		id: number;
-		title: string;
-		posterPath?: string | null;
-		releaseDate?: string | null;
-	};
+export interface IMovieReview {
+	id: number;
+	userId: number;
+	movieId: number;
+	content: string;
+	rating?: number | null;
+	isPublic: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Post related interfaces
+export interface Post {
+	id: number;
+	userId: number;
+	tmdbId: string;
+	posterPath?: string | null;
+	title: string;
+	content: string;
+	likesCount: number;
+	commentsCount: number;
+	isPublic: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Input type for creating/updating posts
+export interface PostInput {
+	tmdbId: string;
+	posterPath?: string | null;
+	title: string;
+	content: string;
+	isPublic?: boolean;
+	userId?: number;
+}
+
+export interface PostLike {
+	id: number;
+	userId: number;
+	postId: number;
+	createdAt: string;
+}
+
+export interface PostComment {
+	id: number;
+	userId: number;
+	postId: number;
+	content: string;
+	createdAt: string;
+	updatedAt: string;
+	username?: string; // For display purposes when returning comments
+	avatar?: string | null; // For display purposes when returning comments
+}
+
+// Input type for creating post comments
+export interface PostCommentInput {
+	content: string;
+	userId?: number;
+	postId?: number;
+}
+
+// Search params for posts
+export interface PostSearchInput extends SearchInput {
+	userId?: number;
+	isPublic?: boolean;
 }

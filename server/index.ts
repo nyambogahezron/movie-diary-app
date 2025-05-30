@@ -11,6 +11,7 @@ import movieRoutes from './routes/movies';
 import watchlistRoutes from './routes/watchlists';
 import favoriteRoutes from './routes/favorites';
 import movieReviewRoutes from './routes/movieReviews';
+import postRoutes from './routes/posts';
 
 import { generateCsrfToken } from './middleware/csrf';
 import { errorHandler } from './middleware/errorHandler';
@@ -73,6 +74,7 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/watchlists', watchlistRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/reviews', movieReviewRoutes);
+app.use('/api/posts', postRoutes);
 
 app.get('/health', (_req, res) => {
 	res.status(200).json({ status: 'ok', message: 'Server is running' });

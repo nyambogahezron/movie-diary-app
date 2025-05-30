@@ -103,3 +103,56 @@ export const movieReviews = sqliteTable('movie_reviews', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 });
+
+// Posts table
+export const posts = sqliteTable('posts', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	tmdbId: text('tmdb_id').notNull(),
+	posterPath: text('poster_path'),
+	title: text('title').notNull(),
+	content: text('content').notNull(),
+	likesCount: integer('likes_count').notNull().default(0),
+	commentsCount: integer('comments_count').notNull().default(0),
+	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(true),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// Post likes table
+export const postLikes = sqliteTable('post_likes', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	postId: integer('post_id')
+		.notNull()
+		.references(() => posts.id, { onDelete: 'cascade' }),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// Post comments table
+export const postComments = sqliteTable('post_comments', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	postId: integer('post_id')
+		.notNull()
+		.references(() => posts.id, { onDelete: 'cascade' }),
+	content: text('content').notNull(),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
