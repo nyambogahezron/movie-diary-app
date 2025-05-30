@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../helpers/User';
 import { AuthPayload, JwtPayload, User as UserType } from '../types';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 
 // Initialize environment variables
 dotenv.config();
@@ -16,7 +17,11 @@ export class AuthenticationError extends Error {
 
 export class AuthService {
 	private static readonly JWT_SECRET =
-		process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+		process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+	private static readonly JWT_REFRESH_SECRET =
+		process.env.JWT_REFRESH_SECRET || crypto.randomBytes(32).toString('hex');
+	private static readonly ACCESS_TOKEN_EXPIRY = '15m'; // Shorter lifespan for access tokens
+	private static readonly REFRESH_TOKEN_EXPIRY = '7d'; // Longer lifespan for refresh tokens
 
 	static async register(
 		username: string,
@@ -38,10 +43,10 @@ export class AuthService {
 		// Create new user
 		const user = await User.create({ username, email, password });
 
-		// Generate token
-		const token = this.generateToken(user);
+		// Generate tokens
+		const { accessToken, refreshToken } = this.generateTokens(user);
 
-		return { token, user };
+		return { token: accessToken, refreshToken, user };
 	}
 
 	static async login(email: string, password: string): Promise<AuthPayload> {
@@ -57,10 +62,10 @@ export class AuthService {
 			throw new AuthenticationError('Invalid credentials');
 		}
 
-		// Generate token
-		const token = this.generateToken(user);
+		// Generate tokens
+		const { accessToken, refreshToken } = this.generateTokens(user);
 
-		return { token, user };
+		return { token: accessToken, refreshToken, user };
 	}
 
 	static async verifyToken(token: string): Promise<UserType> {
@@ -77,11 +82,65 @@ export class AuthService {
 
 			return user;
 		} catch (error) {
-			throw new AuthenticationError('Invalid or expired token');
+			if (error instanceof jwt.TokenExpiredError) {
+				throw new AuthenticationError('Token expired');
+			}
+			throw new AuthenticationError('Invalid token');
 		}
 	}
 
-	private static generateToken(user: UserType): string {
-		return jwt.sign({ userId: user.id }, this.JWT_SECRET, { expiresIn: '7d' });
+	static async refreshAccessToken(
+		refreshToken: string
+	): Promise<{ accessToken: string }> {
+		try {
+			// Verify the refresh token
+			const decoded = jwt.verify(
+				refreshToken,
+				this.JWT_REFRESH_SECRET
+			) as JwtPayload;
+
+			// Find user by ID
+			const user = await User.findById(decoded.userId);
+
+			if (!user) {
+				throw new AuthenticationError('User not found');
+			}
+
+			// Generate a new access token
+			const accessToken = this.generateAccessToken(user);
+
+			return { accessToken };
+		} catch (error) {
+			if (error instanceof jwt.TokenExpiredError) {
+				throw new AuthenticationError(
+					'Refresh token expired, please login again'
+				);
+			}
+			throw new AuthenticationError('Invalid refresh token');
+		}
+	}
+
+	private static generateTokens(user: UserType): {
+		accessToken: string;
+		refreshToken: string;
+	} {
+		const accessToken = this.generateAccessToken(user);
+		const refreshToken = this.generateRefreshToken(user);
+
+		return { accessToken, refreshToken };
+	}
+
+	private static generateAccessToken(user: UserType): string {
+		return jwt.sign({ userId: user.id }, this.JWT_SECRET, {
+			expiresIn: this.ACCESS_TOKEN_EXPIRY,
+			algorithm: 'HS256',
+		});
+	}
+
+	private static generateRefreshToken(user: UserType): string {
+		return jwt.sign({ userId: user.id }, this.JWT_REFRESH_SECRET, {
+			expiresIn: this.REFRESH_TOKEN_EXPIRY,
+			algorithm: 'HS256',
+		});
 	}
 }

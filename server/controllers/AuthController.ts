@@ -18,6 +18,16 @@ export class AuthController {
 			// Register the user
 			const authPayload = await AuthService.register(username, email, password);
 
+			// Set refresh token in HTTP-only cookie
+			if (authPayload.refreshToken) {
+				res.cookie('refreshToken', authPayload.refreshToken, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: 'strict',
+					maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+				});
+			}
+
 			// Return the auth token and user info
 			res.status(201).json({
 				message: 'User registered successfully',
@@ -56,6 +66,16 @@ export class AuthController {
 
 			// Login the user
 			const authPayload = await AuthService.login(email, password);
+
+			// Set refresh token in HTTP-only cookie
+			if (authPayload.refreshToken) {
+				res.cookie('refreshToken', authPayload.refreshToken, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: 'strict',
+					maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+				});
+			}
 
 			// Return the auth token and user info
 			res.status(200).json({
@@ -109,6 +129,43 @@ export class AuthController {
 			res
 				.status(500)
 				.json({ error: 'An error occurred while getting user profile' });
+		}
+	}
+
+	// Refresh access token
+	static async refreshToken(req: Request, res: Response): Promise<void> {
+		try {
+			// Get refresh token from cookie
+			const refreshToken = req.cookies.refreshToken;
+
+			// Validate request
+			if (!refreshToken) {
+				res.status(400).json({ error: 'Refresh token is required' });
+				return;
+			}
+
+			// Generate new access token
+			const { accessToken } = await AuthService.refreshAccessToken(
+				refreshToken
+			);
+
+			// Return the new access token
+			res.status(200).json({
+				message: 'Token refreshed successfully',
+				data: {
+					token: accessToken,
+				},
+			});
+		} catch (error) {
+			if ((error as Error).name === 'AuthenticationError') {
+				// Clear the invalid refresh token cookie
+				res.clearCookie('refreshToken');
+				res.status(401).json({ error: (error as Error).message });
+				return;
+			}
+
+			console.error('Refresh token error:', error);
+			res.status(500).json({ error: 'An error occurred during token refresh' });
 		}
 	}
 }

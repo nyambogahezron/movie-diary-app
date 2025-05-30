@@ -117,6 +117,7 @@ export interface IFavorite {
 
 export interface AuthPayload {
 	token: string;
+	refreshToken?: string; // Optional for backward compatibility
 	user: User;
 }
 

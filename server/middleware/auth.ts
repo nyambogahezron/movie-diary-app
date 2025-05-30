@@ -25,21 +25,36 @@ export const authMiddleware = async (
 		}
 
 		// Extract the token (remove 'Bearer ' prefix)
-		const token = authHeader.split(' ')[1];
+		const parts = authHeader.split(' ');
 
-		if (!token) {
+		if (parts.length !== 2 || parts[0] !== 'Bearer') {
 			res.status(401).json({ error: 'Invalid authentication token format' });
 			return;
 		}
 
+		const token = parts[1];
+
 		// Verify the token and get the user
-		const user = await AuthService.verifyToken(token);
+		try {
+			const user = await AuthService.verifyToken(token);
 
-		// Add the user to the request object
-		req.user = user;
+			// Add the user to the request object
+			req.user = user;
 
-		// Continue to the next middleware or route handler
-		next();
+			// Continue to the next middleware or route handler
+			next();
+		} catch (error: any) {
+			// Check if token is expired
+			if (error.message === 'Token expired') {
+				res.status(401).json({
+					error: 'Token expired',
+					code: 'TOKEN_EXPIRED',
+				});
+				return;
+			}
+
+			throw error;
+		}
 	} catch (error) {
 		res
 			.status(401)
@@ -58,14 +73,20 @@ export const optionalAuthMiddleware = async (
 
 		if (authHeader) {
 			// Extract the token (remove 'Bearer ' prefix)
-			const token = authHeader.split(' ')[1];
+			const parts = authHeader.split(' ');
 
-			if (token) {
-				// Verify the token and get the user
-				const user = await AuthService.verifyToken(token);
+			if (parts.length === 2 && parts[0] === 'Bearer') {
+				const token = parts[1];
 
-				// Add the user to the request object
-				req.user = user;
+				try {
+					// Verify the token and get the user
+					const user = await AuthService.verifyToken(token);
+
+					// Add the user to the request object
+					req.user = user;
+				} catch (error) {
+					// Silently fail and proceed without authentication
+				}
 			}
 		}
 
