@@ -12,7 +12,7 @@
 		"build": "tsc",
 		"migrate": "ts-node db/migrate.ts",
 		"setup": "bun install && bun run migrate ",
-		"migrate:dev": "bun drizzle-kit migrate --env dev"
+		"migrate:dev": "bun drizzle-kit migrate"
 	},
 	"author": "Hezron Nyamboga",
 	"license": "ISC",
