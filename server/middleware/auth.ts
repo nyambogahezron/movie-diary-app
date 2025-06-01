@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
 import { User } from '../types';
 
-// Extend Express Request to include user
 declare global {
 	namespace Express {
 		interface Request {
@@ -24,7 +23,6 @@ export const authMiddleware = async (
 			return;
 		}
 
-		// Extract the token (remove 'Bearer ' prefix)
 		const parts = authHeader.split(' ');
 
 		if (parts.length !== 2 || parts[0] !== 'Bearer') {
@@ -34,17 +32,13 @@ export const authMiddleware = async (
 
 		const token = parts[1];
 
-		// Verify the token and get the user
 		try {
 			const user = await AuthService.verifyToken(token);
 
-			// Add the user to the request object
 			req.user = user;
 
-			// Continue to the next middleware or route handler
 			next();
 		} catch (error: any) {
-			// Check if token is expired
 			if (error.message === 'Token expired') {
 				res.status(401).json({
 					error: 'Token expired',
@@ -62,7 +56,6 @@ export const authMiddleware = async (
 	}
 };
 
-// Optional middleware to check authentication without requiring it
 export const optionalAuthMiddleware = async (
 	req: Request,
 	res: Response,
@@ -72,28 +65,21 @@ export const optionalAuthMiddleware = async (
 		const authHeader = req.headers.authorization;
 
 		if (authHeader) {
-			// Extract the token (remove 'Bearer ' prefix)
 			const parts = authHeader.split(' ');
 
 			if (parts.length === 2 && parts[0] === 'Bearer') {
 				const token = parts[1];
 
 				try {
-					// Verify the token and get the user
 					const user = await AuthService.verifyToken(token);
 
-					// Add the user to the request object
 					req.user = user;
-				} catch (error) {
-					// Silently fail and proceed without authentication
-				}
+				} catch (error) {}
 			}
 		}
 
-		// Continue to the next middleware or route handler regardless of authentication
 		next();
 	} catch (error) {
-		// If authentication fails, just continue without setting req.user
 		next();
 	}
 };

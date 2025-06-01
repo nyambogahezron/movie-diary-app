@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { FavoriteService } from '../services/FavoriteService';
 import { SearchInput } from '../types';
+import AsyncHandler from '../middleware/asyncHandler';
 
 export class FavoriteController {
-	static async addFavorite(req: Request, res: Response): Promise<void> {
-		try {
+	static addFavorite = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -17,44 +18,20 @@ export class FavoriteController {
 				return;
 			}
 
-			try {
-				const favorite = await FavoriteService.addFavorite(
-					parseInt(movieId, 10),
-					req.user
-				);
+			const favorite = await FavoriteService.addFavorite(
+				parseInt(movieId, 10),
+				req.user
+			);
 
-				res.status(201).json({
-					message: 'Movie added to favorites successfully',
-					data: favorite,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'ConflictError') {
-					res.status(409).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error adding movie to favorites:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while adding movie to favorites' });
+			res.status(201).json({
+				message: 'Movie added to favorites successfully',
+				data: favorite,
+			});
 		}
-	}
+	);
 
-	static async getFavorites(req: Request, res: Response): Promise<void> {
-		try {
+	static getFavorites = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -82,75 +59,20 @@ export class FavoriteController {
 				searchParams.offset = parseInt(req.query.offset as string, 10);
 			}
 
-			try {
-				const movies = await FavoriteService.getFavoriteMovies(
-					req.user,
-					searchParams
-				);
+			const movies = await FavoriteService.getFavoriteMovies(
+				req.user,
+				searchParams
+			);
 
-				res.status(200).json({
-					message: 'Favorite movies retrieved successfully',
-					data: movies,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error getting favorite movies:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving favorite movies' });
-		}
-	}
-
-	static async removeFavorite(req: Request, res: Response): Promise<void> {
-		try {
-			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
-			}
-
-			const movieId = parseInt(req.params.movieId, 10);
-
-			if (isNaN(movieId)) {
-				res.status(400).json({ error: 'Invalid movie ID' });
-				return;
-			}
-
-			try {
-				await FavoriteService.removeFavorite(movieId, req.user);
-
-				res.status(200).json({
-					message: 'Movie removed from favorites successfully',
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error removing movie from favorites:', error);
-			res.status(500).json({
-				error: 'An error occurred while removing movie from favorites',
+			res.status(200).json({
+				message: 'Favorite movies retrieved successfully',
+				data: movies,
 			});
 		}
-	}
+	);
 
-	static async checkFavorite(req: Request, res: Response): Promise<void> {
-		try {
+	static removeFavorite = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -163,26 +85,34 @@ export class FavoriteController {
 				return;
 			}
 
-			try {
-				const isFavorite = await FavoriteService.isFavorite(movieId, req.user);
+			await FavoriteService.removeFavorite(movieId, req.user);
 
-				res.status(200).json({
-					message: 'Favorite status checked successfully',
-					data: { isFavorite },
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error checking favorite status:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while checking favorite status' });
+			res.status(200).json({
+				message: 'Movie removed from favorites successfully',
+			});
 		}
-	}
+	);
+
+	static checkFavorite = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			if (!req.user) {
+				res.status(401).json({ error: 'Authentication required' });
+				return;
+			}
+
+			const movieId = parseInt(req.params.movieId, 10);
+
+			if (isNaN(movieId)) {
+				res.status(400).json({ error: 'Invalid movie ID' });
+				return;
+			}
+
+			const isFavorite = await FavoriteService.isFavorite(movieId, req.user);
+
+			res.status(200).json({
+				message: 'Favorite status checked successfully',
+				data: { isFavorite },
+			});
+		}
+	);
 }

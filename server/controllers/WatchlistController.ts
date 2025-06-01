@@ -1,20 +1,20 @@
 import { Request, Response } from 'express';
 import { WatchlistService } from '../services/WatchlistService';
 import { SearchInput, WatchlistInput } from '../types';
+import AsyncHandler from '../middleware/asyncHandler';
+import { AuthorizationError } from '../utils/errors';
 
 export class WatchlistController {
-	static async createWatchlist(req: Request, res: Response): Promise<void> {
-		try {
+	static createWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const { name, description, isPublic } = req.body;
 
 			if (!name) {
-				res.status(400).json({ error: 'Watchlist name is required' });
-				return;
+				throw new Error('Watchlist name is required');
 			}
 
 			const watchlist = await WatchlistService.createWatchlist(
@@ -30,24 +30,13 @@ export class WatchlistController {
 				message: 'Watchlist created successfully',
 				data: watchlist,
 			});
-		} catch (error) {
-			if ((error as Error).name === 'ConflictError') {
-				res.status(409).json({ error: (error as Error).message });
-				return;
-			}
-
-			console.error('Error creating watchlist:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while creating the watchlist' });
 		}
-	}
+	);
 
-	static async getUserWatchlists(req: Request, res: Response): Promise<void> {
-		try {
+	static getUserWatchlists = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const watchlists = await WatchlistService.getWatchlists(req.user);
@@ -56,16 +45,11 @@ export class WatchlistController {
 				message: 'Watchlists retrieved successfully',
 				data: watchlists,
 			});
-		} catch (error) {
-			console.error('Error getting user watchlists:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving watchlists' });
 		}
-	}
+	);
 
-	static async getPublicWatchlists(req: Request, res: Response): Promise<void> {
-		try {
+	static getPublicWatchlists = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {
@@ -96,275 +80,140 @@ export class WatchlistController {
 				message: 'Public watchlists retrieved successfully',
 				data: watchlists,
 			});
-		} catch (error) {
-			console.error('Error getting public watchlists:', error);
-			res.status(500).json({
-				error: 'An error occurred while retrieving public watchlists',
+		}
+	);
+
+	static getWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			if (!req.user) {
+				throw new AuthorizationError('Authentication required');
+			}
+
+			const watchlistId = Number(req.params.id);
+
+			if (isNaN(watchlistId)) {
+				throw new Error('Invalid watchlist ID');
+			}
+
+			const watchlist = await WatchlistService.getWatchlist(
+				watchlistId,
+				req.user
+			);
+
+			res.status(200).json({
+				message: 'Watchlist retrieved successfully',
+				data: watchlist,
 			});
 		}
-	}
+	);
 
-	static async getWatchlist(req: Request, res: Response): Promise<void> {
-		try {
+	static updateWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
 
 			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
+				throw new Error('Invalid watchlist ID');
 			}
 
-			try {
-				const watchlist = await WatchlistService.getWatchlist(
-					watchlistId,
-					req.user
-				);
+			const watchlist = await WatchlistService.updateWatchlist(
+				watchlistId,
+				req.body,
+				req.user
+			);
 
-				res.status(200).json({
-					message: 'Watchlist retrieved successfully',
-					data: watchlist,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error getting watchlist:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving the watchlist' });
-		}
-	}
-
-	static async updateWatchlist(req: Request, res: Response): Promise<void> {
-		try {
-			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
-			}
-
-			const watchlistId = Number(req.params.id);
-
-			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
-			}
-
-			try {
-				const watchlist = await WatchlistService.updateWatchlist(
-					watchlistId,
-					req.body,
-					req.user
-				);
-
-				res.status(200).json({
-					message: 'Watchlist updated successfully',
-					data: watchlist,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'ConflictError') {
-					res.status(409).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error updating watchlist:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while updating the watchlist' });
-		}
-	}
-
-	static async deleteWatchlist(req: Request, res: Response): Promise<void> {
-		try {
-			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
-			}
-
-			const watchlistId = Number(req.params.id);
-
-			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
-			}
-
-			try {
-				await WatchlistService.deleteWatchlist(watchlistId, req.user);
-
-				res.status(200).json({
-					message: 'Watchlist deleted successfully',
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error deleting watchlist:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while deleting the watchlist' });
-		}
-	}
-
-	static async addMovieToWatchlist(req: Request, res: Response): Promise<void> {
-		try {
-			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
-			}
-
-			const watchlistId = Number(req.params.id);
-			const { movieId } = req.body;
-
-			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
-			}
-
-			if (!movieId || isNaN(Number(movieId))) {
-				res.status(400).json({ error: 'Valid movie ID is required' });
-				return;
-			}
-
-			try {
-				await WatchlistService.addMovieToWatchlist(
-					watchlistId,
-					Number(movieId),
-					req.user
-				);
-
-				res.status(200).json({
-					message: 'Movie added to watchlist successfully',
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error adding movie to watchlist:', error);
-			res.status(500).json({
-				error: 'An error occurred while adding the movie to the watchlist',
+			res.status(200).json({
+				message: 'Watchlist updated successfully',
+				data: watchlist,
 			});
 		}
-	}
+	);
 
-	// Remove a movie from a watchlist
-	static async removeMovieFromWatchlist(
-		req: Request,
-		res: Response
-	): Promise<void> {
-		try {
-			// Check authentication
+	static deleteWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
+			}
+
+			const watchlistId = Number(req.params.id);
+
+			if (isNaN(watchlistId)) {
+				throw new Error('Invalid watchlist ID');
+			}
+
+			await WatchlistService.deleteWatchlist(watchlistId, req.user);
+
+			res.status(200).json({
+				message: 'Watchlist deleted successfully',
+			});
+		}
+	);
+
+	static addMovieToWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			if (!req.user) {
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
 			const movieId = Number(req.params.movieId);
 
-			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
+			if (isNaN(watchlistId) || isNaN(movieId)) {
+				throw new Error('Invalid watchlist ID or movie ID');
 			}
 
-			if (isNaN(movieId)) {
-				res.status(400).json({ error: 'Invalid movie ID' });
-				return;
-			}
+			await WatchlistService.addMovieToWatchlist(
+				watchlistId,
+				movieId,
+				req.user
+			);
 
-			try {
-				await WatchlistService.removeMovieFromWatchlist(
-					watchlistId,
-					movieId,
-					req.user
-				);
-
-				res.status(200).json({
-					message: 'Movie removed from watchlist successfully',
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error removing movie from watchlist:', error);
-			res.status(500).json({
-				error: 'An error occurred while removing the movie from the watchlist',
+			res.status(200).json({
+				message: 'Movie added to watchlist successfully',
 			});
 		}
-	}
+	);
 
-	// Get all movies in a watchlist
-	static async getWatchlistMovies(req: Request, res: Response): Promise<void> {
-		try {
-			// Check authentication
+	static removeMovieFromWatchlist = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
+			}
+
+			const watchlistId = Number(req.params.id);
+			const movieId = Number(req.params.movieId);
+
+			if (isNaN(watchlistId) || isNaN(movieId)) {
+				throw new Error('Invalid watchlist ID or movie ID');
+			}
+
+			await WatchlistService.removeMovieFromWatchlist(
+				watchlistId,
+				movieId,
+				req.user
+			);
+
+			res.status(200).json({
+				message: 'Movie removed from watchlist successfully',
+			});
+		}
+	);
+
+	static getWatchlistMovies = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
+			if (!req.user) {
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
 
 			if (isNaN(watchlistId)) {
-				res.status(400).json({ error: 'Invalid watchlist ID' });
-				return;
+				throw new Error('Invalid watchlist ID');
 			}
 
-			// Parse search, sort and pagination parameters
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {
@@ -387,35 +236,16 @@ export class WatchlistController {
 				searchParams.offset = Number(req.query.offset);
 			}
 
-			try {
-				const movies = await WatchlistService.getWatchlistMovies(
-					watchlistId,
-					req.user,
-					searchParams
-				);
+			const movies = await WatchlistService.getWatchlistMovies(
+				watchlistId,
+				req.user,
+				searchParams
+			);
 
-				res.status(200).json({
-					message: 'Watchlist movies retrieved successfully',
-					data: movies,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error getting watchlist movies:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving watchlist movies' });
+			res.status(200).json({
+				message: 'Watchlist movies retrieved successfully',
+				data: movies,
+			});
 		}
-	}
+	);
 }

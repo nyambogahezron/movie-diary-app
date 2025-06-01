@@ -7,12 +7,10 @@ export class Movie {
 	static async create(
 		movieData: MovieInput & { userId: number }
 	): Promise<MovieType> {
-		// Convert genres array to JSON string if provided
 		const genresJson = movieData.genres
 			? JSON.stringify(movieData.genres)
 			: null;
 
-		// Validate rating if provided
 		if (
 			movieData.rating !== undefined &&
 			movieData.rating !== null &&
@@ -21,7 +19,6 @@ export class Movie {
 			throw new Error('Rating must be between 0 and 10');
 		}
 
-		// Insert movie
 		const result = await db
 			.insert(movies)
 			.values({
@@ -61,16 +58,13 @@ export class Movie {
 		userId: number,
 		params?: SearchInput
 	): Promise<MovieType[]> {
-		// Prepare the conditions
 		const conditions = [];
 		conditions.push(eq(movies.userId, userId));
 
-		// Add search if provided
 		if (params?.search) {
 			conditions.push(like(movies.title, `%${params.search}%`));
 		}
 
-		// Determine sorting column and order
 		let orderByColumn: any = movies.createdAt;
 		let orderByDirection: 'asc' | 'desc' = 'desc';
 
@@ -82,7 +76,6 @@ export class Movie {
 			}
 		}
 
-		// Create the base query with where before orderBy, limit, and offset
 		const result = await db
 			.select()
 			.from(movies)
@@ -118,12 +111,10 @@ export class Movie {
 		if (movieData.review !== undefined) dataToUpdate.review = movieData.review;
 		if (movieData.userId !== undefined) dataToUpdate.userId = movieData.userId;
 
-		// Convert genres array to JSON string if provided
 		if (Array.isArray(movieData.genres)) {
 			dataToUpdate.genres = JSON.stringify(movieData.genres);
 		}
 
-		// Set the updatedAt timestamp
 		dataToUpdate.updatedAt = new Date().toISOString();
 
 		await db.update(movies).set(dataToUpdate).where(eq(movies.id, id));

@@ -8,7 +8,6 @@ export class Favorite {
 		userId: number;
 		movieId: number;
 	}): Promise<FavoriteType> {
-		// Check if the movie is already favorited by the user
 		const existingFavorite = await db
 			.select()
 			.from(favorites)
@@ -23,7 +22,6 @@ export class Favorite {
 			return existingFavorite[0] as unknown as FavoriteType;
 		}
 
-		// Insert favorite
 		const result = await db
 			.insert(favorites)
 			.values({

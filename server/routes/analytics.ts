@@ -21,28 +21,14 @@ const superUserCheck = (
 
 router.use(authMiddleware, superUserCheck);
 
-router.get('/endpoints', (req: Request, res: Response) => {
-	analyticsController.getEndpointAnalytics(req, res);
-});
-
-router.get('/endpoints/:endpoint/:method', (req: Request, res: Response) => {
-	analyticsController.getEndpointDetail(req, res);
-});
-
-router.get('/users', (req: Request, res: Response) => {
-	analyticsController.getUserAnalytics(req, res);
-});
-
-router.get('/users/:userId', (req: Request, res: Response) => {
-	analyticsController.getUserDetail(req, res);
-});
-
-router.get('/system', (req: Request, res: Response) => {
-	analyticsController.getSystemAnalytics(req, res);
-});
-
-router.get('/real-time', (req: Request, res: Response) => {
-	analyticsController.getRealTimeAnalytics(req, res);
-});
+router.get('/endpoints', analyticsController.getEndpointAnalytics);
+router.get(
+	'/endpoints/:endpoint/:method',
+	analyticsController.getEndpointDetail
+);
+router.get('/users', analyticsController.getUserAnalytics);
+router.get('/users/:userId', analyticsController.getUserDetail);
+router.get('/system', analyticsController.getSystemAnalytics);
+router.get('/real-time', analyticsController.getRealTimeAnalytics);
 
 export default router;

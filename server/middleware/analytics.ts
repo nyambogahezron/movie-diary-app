@@ -4,19 +4,15 @@ import { requestLogs } from '../db/analyticsSchema';
 import { eq, and, sql } from 'drizzle-orm';
 import { userAnalytics, endpointAnalytics } from '../db/analyticsSchema';
 
-// Helper to normalize path by removing dynamic segments
 const normalizeEndpoint = (path: string): string => {
-	// Replace ID patterns like /users/123 with /users/:id
 	return path.replace(/\/[0-9]+(?=\/|$)/g, '/:id');
 };
 
-// Extract the sanitized request body by removing sensitive fields
 const sanitizeRequestBody = (body: any): any => {
 	if (!body) return null;
 
 	const sanitized = { ...body };
 
-	// Remove sensitive fields
 	const sensitiveFields = [
 		'password',
 		'token',
@@ -39,7 +35,6 @@ export const analyticsMiddleware = (
 	res: Response,
 	next: NextFunction
 ) => {
-	// Skip analytics for health checks or analytics endpoints themselves
 	if (req.path === '/health' || req.path.startsWith('/api/analytics')) {
 		return next();
 	}
@@ -54,22 +49,18 @@ export const analyticsMiddleware = (
 		req.connection.remoteAddress ||
 		'unknown';
 
-	// Capture original response methods
 	const originalSend = res.send;
 	const originalJson = res.json;
 	const originalEnd = res.end;
 
-	// Override send method to capture response data
 	res.send = function (body?: any): Response {
 		const responseTime = Date.now() - startTime;
 		const statusCode = res.statusCode;
 		const userId = req.user?.id;
 		const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-		// Store request log asynchronously (don't block response)
 		(async () => {
 			try {
-				// Log the request
 				await db.insert(requestLogs).values({
 					userId: userId,
 					method: requestMethod,
@@ -84,7 +75,6 @@ export const analyticsMiddleware = (
 					body: JSON.stringify(sanitizeRequestBody(req.body)),
 				});
 
-				// Update user analytics if user is authenticated
 				if (userId) {
 					const existingUserAnalytics = await db
 						.select()
@@ -125,7 +115,6 @@ export const analyticsMiddleware = (
 					}
 				}
 
-				// Update endpoint analytics
 				const existingEndpointAnalytics = await db
 					.select()
 					.from(endpointAnalytics)
@@ -189,12 +178,10 @@ export const analyticsMiddleware = (
 		return originalSend.call(this, body);
 	};
 
-	// Override json method
 	res.json = function (body?: any): Response {
 		return originalJson.call(this, body);
 	};
 
-	// Override end method
 	res.end = function (
 		chunk?: any,
 		encodingOrCallback?: BufferEncoding | (() => void),

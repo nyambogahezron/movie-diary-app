@@ -12,10 +12,8 @@ export const validate = (validations: ValidationChain[]) => {
 		next: NextFunction
 	): Promise<void> => {
 		try {
-			// Execute all validations
 			await Promise.all(validations.map((validation) => validation.run(req)));
 
-			// Check if there were validation errors
 			const errors = validationResult(req);
 
 			if (!errors.isEmpty()) {

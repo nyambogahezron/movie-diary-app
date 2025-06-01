@@ -1,186 +1,116 @@
 import { Request, Response } from 'express';
 import { MovieReviewService } from '../services/MovieReviewService';
 import { MovieReviewInput } from '../types';
+import AsyncHandler from '../middleware/asyncHandler';
+import { AuthorizationError } from '../utils/errors';
 
 export class MovieReviewController {
-	static async addReview(req: Request, res: Response): Promise<void> {
-		try {
+	static addReview = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const movieId = Number(req.params.movieId);
 			if (isNaN(movieId)) {
-				res.status(400).json({ error: 'Invalid movie ID' });
-				return;
+				throw new Error('Invalid movie ID');
 			}
 
 			const { content, rating, isPublic } = req.body;
 
 			if (!content) {
-				res.status(400).json({ error: 'Review content is required' });
-				return;
+				throw new Error('Review content is required');
 			}
 
 			if (
 				rating !== undefined &&
 				(isNaN(Number(rating)) || Number(rating) < 1 || Number(rating) > 10)
 			) {
-				res
-					.status(400)
-					.json({ error: 'Rating must be a number between 1 and 10' });
-				return;
+				throw new Error('Rating must be a number between 1 and 10');
 			}
 
-			try {
-				const review = await MovieReviewService.addReview(
-					movieId,
-					{
-						content,
-						rating: rating ? Number(rating) : null,
-						isPublic,
-					},
-					req.user
-				);
+			const review = await MovieReviewService.addReview(
+				movieId,
+				{
+					content,
+					rating: rating ? Number(rating) : null,
+					isPublic,
+				},
+				req.user
+			);
 
-				res.status(201).json({
-					message: 'Review added successfully',
-					data: review,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'DuplicateError') {
-					res.status(409).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error adding review:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while adding the review' });
+			res.status(201).json({
+				message: 'Review added successfully',
+				data: review,
+			});
 		}
-	}
+	);
 
-	static async getMovieReviews(req: Request, res: Response): Promise<void> {
-		try {
+	static getMovieReviews = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const movieId = Number(req.params.movieId);
 			if (isNaN(movieId)) {
-				res.status(400).json({ error: 'Invalid movie ID' });
-				return;
+				throw new Error('Invalid movie ID');
 			}
 
-			try {
-				const reviews = await MovieReviewService.getMovieReviews(
-					movieId,
-					req.user
-				);
+			const reviews = await MovieReviewService.getMovieReviews(
+				movieId,
+				req.user
+			);
 
-				res.status(200).json({
-					message: 'Reviews retrieved successfully',
-					data: reviews,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error getting reviews:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving the reviews' });
+			res.status(200).json({
+				message: 'Reviews retrieved successfully',
+				data: reviews,
+			});
 		}
-	}
+	);
 
-	static async getReview(req: Request, res: Response): Promise<void> {
-		try {
+	static getReview = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
 			if (isNaN(reviewId)) {
-				res.status(400).json({ error: 'Invalid review ID' });
-				return;
+				throw new Error('Invalid review ID');
 			}
 
-			try {
-				const review = await MovieReviewService.getReview(reviewId, req.user);
+			const review = await MovieReviewService.getReview(reviewId, req.user);
 
-				res.status(200).json({
-					message: 'Review retrieved successfully',
-					data: review,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error getting review:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving the review' });
+			res.status(200).json({
+				message: 'Review retrieved successfully',
+				data: review,
+			});
 		}
-	}
+	);
 
-	// Update a review
-	static async updateReview(req: Request, res: Response): Promise<void> {
-		try {
-			// Check authentication
+	static updateReview = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
 			if (isNaN(reviewId)) {
-				res.status(400).json({ error: 'Invalid review ID' });
-				return;
+				throw new Error('Invalid review ID');
 			}
 
 			const { content, rating, isPublic } = req.body;
 
-			// Validate input
 			if (!content && rating === undefined && isPublic === undefined) {
-				res.status(400).json({ error: 'No update data provided' });
-				return;
+				throw new Error('No update data provided');
 			}
 
-			// Validate rating if provided
 			if (
 				rating !== undefined &&
 				(isNaN(Number(rating)) || Number(rating) < 1 || Number(rating) > 10)
 			) {
-				res
-					.status(400)
-					.json({ error: 'Rating must be a number between 1 and 10' });
-				return;
+				throw new Error('Rating must be a number between 1 and 10');
 			}
 
 			const updateData: Partial<MovieReviewInput> = {};
@@ -188,87 +118,42 @@ export class MovieReviewController {
 			if (rating !== undefined) updateData.rating = Number(rating);
 			if (isPublic !== undefined) updateData.isPublic = isPublic;
 
-			try {
-				const review = await MovieReviewService.updateReview(
-					reviewId,
-					updateData,
-					req.user
-				);
+			const review = await MovieReviewService.updateReview(
+				reviewId,
+				updateData,
+				req.user
+			);
 
-				res.status(200).json({
-					message: 'Review updated successfully',
-					data: review,
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error updating review:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while updating the review' });
+			res.status(200).json({
+				message: 'Review updated successfully',
+				data: review,
+			});
 		}
-	}
+	);
 
-	// Delete a review
-	static async deleteReview(req: Request, res: Response): Promise<void> {
-		try {
-			// Check authentication
+	static deleteReview = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
 			if (isNaN(reviewId)) {
-				res.status(400).json({ error: 'Invalid review ID' });
-				return;
+				throw new Error('Invalid review ID');
 			}
 
-			try {
-				await MovieReviewService.deleteReview(reviewId, req.user);
+			await MovieReviewService.deleteReview(reviewId, req.user);
 
-				res.status(200).json({
-					message: 'Review deleted successfully',
-				});
-			} catch (error) {
-				if ((error as Error).name === 'NotFoundError') {
-					res.status(404).json({ error: (error as Error).message });
-					return;
-				}
-
-				if ((error as Error).name === 'AuthorizationError') {
-					res.status(403).json({ error: (error as Error).message });
-					return;
-				}
-
-				throw error;
-			}
-		} catch (error) {
-			console.error('Error deleting review:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while deleting the review' });
+			res.status(200).json({
+				message: 'Review deleted successfully',
+			});
 		}
-	}
+	);
 
-	// Get all reviews by current user
-	static async getUserReviews(req: Request, res: Response): Promise<void> {
-		try {
-			// Check authentication
+	static getUserReviews = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				res.status(401).json({ error: 'Authentication required' });
-				return;
+				throw new AuthorizationError('Authentication required');
 			}
 
 			const reviews = await MovieReviewService.getUserReviews(req.user);
@@ -277,11 +162,6 @@ export class MovieReviewController {
 				message: 'User reviews retrieved successfully',
 				data: reviews,
 			});
-		} catch (error) {
-			console.error('Error getting user reviews:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while retrieving user reviews' });
 		}
-	}
+	);
 }

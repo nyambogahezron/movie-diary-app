@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
+import AsyncHandler from '../middleware/asyncHandler';
 
 export class AuthController {
-	static async register(req: Request, res: Response): Promise<void> {
-		try {
+	static register = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const { username, email, password } = req.body;
 
 			if (!username || !email || !password) {
@@ -37,19 +38,11 @@ export class AuthController {
 					},
 				},
 			});
-		} catch (error) {
-			if ((error as Error).name === 'AuthenticationError') {
-				res.status(400).json({ error: (error as Error).message });
-				return;
-			}
-
-			console.error('Registration error:', error);
-			res.status(500).json({ error: 'An error occurred during registration' });
 		}
-	}
+	);
 
-	static async login(req: Request, res: Response): Promise<void> {
-		try {
+	static login = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const { email, password } = req.body;
 
 			if (!email || !password) {
@@ -81,19 +74,11 @@ export class AuthController {
 					},
 				},
 			});
-		} catch (error) {
-			if ((error as Error).name === 'AuthenticationError') {
-				res.status(401).json({ error: (error as Error).message });
-				return;
-			}
-
-			console.error('Login error:', error);
-			res.status(500).json({ error: 'An error occurred during login' });
 		}
-	}
+	);
 
-	static async getCurrentUser(req: Request, res: Response): Promise<void> {
-		try {
+	static getCurrentUser = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
 				res.status(401).json({ error: 'Not authenticated' });
 				return;
@@ -111,46 +96,28 @@ export class AuthController {
 					},
 				},
 			});
-		} catch (error) {
-			console.error('Get current user error:', error);
-			res
-				.status(500)
-				.json({ error: 'An error occurred while getting user profile' });
 		}
-	}
+	);
 
-	static async refreshToken(req: Request, res: Response): Promise<void> {
-		try {
+	static refreshToken = AsyncHandler(
+		async (req: Request, res: Response): Promise<void> => {
 			const refreshToken = req.cookies.refreshToken;
 
-			// Validate request
 			if (!refreshToken) {
 				res.status(400).json({ error: 'Refresh token is required' });
 				return;
 			}
 
-			// Generate new access token
 			const { accessToken } = await AuthService.refreshAccessToken(
 				refreshToken
 			);
 
-			// Return the new access token
 			res.status(200).json({
 				message: 'Token refreshed successfully',
 				data: {
 					token: accessToken,
 				},
 			});
-		} catch (error) {
-			if ((error as Error).name === 'AuthenticationError') {
-				// Clear the invalid refresh token cookie
-				res.clearCookie('refreshToken');
-				res.status(401).json({ error: (error as Error).message });
-				return;
-			}
-
-			console.error('Refresh token error:', error);
-			res.status(500).json({ error: 'An error occurred during token refresh' });
 		}
-	}
+	);
 }
