@@ -11,7 +11,6 @@ export class User {
 		password: string;
 		avatar?: string;
 	}): Promise<UserType> {
-		// Validate input
 		if (!userData.username || userData.username.length < 3) {
 			throw new Error('Username must be at least 3 characters long');
 		}
@@ -24,10 +23,8 @@ export class User {
 			throw new Error('Password must be at least 6 characters long');
 		}
 
-		// Hash password
 		const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-		// Insert user
 		const result = await db
 			.insert(users)
 			.values({

@@ -195,8 +195,20 @@ export const analyticsMiddleware = (
 	};
 
 	// Override end method
-	res.end = function (chunk?: any, encoding?: string): Response {
-		return originalEnd.call(this, chunk, encoding);
+	res.end = function (
+		chunk?: any,
+		encodingOrCallback?: BufferEncoding | (() => void),
+		callback?: () => void
+	): Response {
+		if (typeof encodingOrCallback === 'function') {
+			return originalEnd.call(this, chunk, 'utf8', encodingOrCallback);
+		}
+		return originalEnd.call(
+			this,
+			chunk,
+			encodingOrCallback || 'utf8',
+			callback
+		);
 	};
 
 	next();

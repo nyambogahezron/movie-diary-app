@@ -1,6 +1,6 @@
 import { Post as PostHelper } from '../helpers/Post';
 import { Post as PostType, PostInput, PostSearchInput } from '../types';
-import { NotFoundError, UnauthorizedError } from '../errors';
+import { NotFoundError, AuthorizationError } from '../utils/errors';
 
 export class PostService {
 	/**
@@ -26,9 +26,8 @@ export class PostService {
 			throw new NotFoundError('Post not found');
 		}
 
-		// If the post is private, only allow the owner to view it
 		if (!post.isPublic && post.userId !== userId) {
-			throw new UnauthorizedError(
+			throw new AuthorizationError(
 				'You do not have permission to view this post'
 			);
 		}
@@ -36,9 +35,6 @@ export class PostService {
 		return post;
 	}
 
-	/**
-	 * Get posts by user ID
-	 */
 	static async getPostsByUserId(
 		userId: number,
 		params?: PostSearchInput
@@ -46,9 +42,6 @@ export class PostService {
 		return await PostHelper.findByUserId(userId, params);
 	}
 
-	/**
-	 * Get public feed of posts
-	 */
 	static async getFeed(
 		userId?: number,
 		params?: PostSearchInput
@@ -56,9 +49,6 @@ export class PostService {
 		return await PostHelper.getFeed(userId, params);
 	}
 
-	/**
-	 * Update a post
-	 */
 	static async updatePost(
 		userId: number,
 		postId: number,
@@ -68,7 +58,7 @@ export class PostService {
 
 		// Only the post owner can update it
 		if (post.userId !== userId) {
-			throw new UnauthorizedError(
+			throw new AuthorizationError(
 				'You do not have permission to update this post'
 			);
 		}
@@ -84,7 +74,7 @@ export class PostService {
 
 		// Only the post owner can delete it
 		if (post.userId !== userId) {
-			throw new UnauthorizedError(
+			throw new AuthorizationError(
 				'You do not have permission to delete this post'
 			);
 		}

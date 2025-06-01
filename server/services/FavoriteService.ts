@@ -80,8 +80,10 @@ export class FavoriteService {
 			const sortOrder = params?.sortOrder === 'desc' ? -1 : 1;
 
 			movies.sort((a, b) => {
-				if (a[sortField] < b[sortField]) return -1 * sortOrder;
-				if (a[sortField] > b[sortField]) return 1 * sortOrder;
+				const aValue = a[sortField] ?? '';
+				const bValue = b[sortField] ?? '';
+				if (aValue < bValue) return -1 * sortOrder;
+				if (aValue > bValue) return 1 * sortOrder;
 				return 0;
 			});
 		}

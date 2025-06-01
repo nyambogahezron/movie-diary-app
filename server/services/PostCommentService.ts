@@ -1,7 +1,7 @@
 import { PostComment as PostCommentHelper } from '../helpers/PostComment';
 import { Post as PostHelper } from '../helpers/Post';
 import { PostComment as PostCommentType, PostCommentInput } from '../types';
-import { NotFoundError, UnauthorizedError } from '../errors';
+import { NotFoundError, AuthorizationError } from '../utils/errors';
 
 export class PostCommentService {
 	/**
@@ -60,7 +60,7 @@ export class PostCommentService {
 
 		// Only the comment owner can update it
 		if (comment.userId !== userId) {
-			throw new UnauthorizedError(
+			throw new AuthorizationError(
 				'You do not have permission to update this comment'
 			);
 		}
@@ -80,7 +80,7 @@ export class PostCommentService {
 
 		// Only the comment owner can delete it
 		if (comment.userId !== userId) {
-			throw new UnauthorizedError(
+			throw new AuthorizationError(
 				'You do not have permission to delete this comment'
 			);
 		}

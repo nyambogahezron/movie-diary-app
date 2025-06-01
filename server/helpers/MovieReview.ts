@@ -106,9 +106,8 @@ export class MovieReview {
 		movieId: number,
 		includePrivate = false
 	): Promise<any[]> {
-		// SQL query to join movie reviews with user data
 		const query = includePrivate
-			? `
+			? sql`
         SELECT 
           mr.*, 
           u.id as user_id, 
@@ -116,10 +115,10 @@ export class MovieReview {
           u.avatar
         FROM movie_reviews mr
         JOIN users u ON mr.user_id = u.id
-        WHERE mr.movie_id = ?
+        WHERE mr.movie_id = ${movieId}
         ORDER BY mr.created_at DESC
       `
-			: `
+			: sql`
         SELECT 
           mr.*, 
           u.id as user_id, 
@@ -127,10 +126,10 @@ export class MovieReview {
           u.avatar
         FROM movie_reviews mr
         JOIN users u ON mr.user_id = u.id
-        WHERE mr.movie_id = ? AND mr.is_public = 1
+        WHERE mr.movie_id = ${movieId} AND mr.is_public = 1
         ORDER BY mr.created_at DESC
       `;
 
-		return (await db.all(query, [movieId])) as any[];
+		return (await db.all(query)) as any[];
 	}
 }

@@ -1,4 +1,3 @@
-// Types for the application entities
 export interface User {
 	id: number;
 	username: string;
@@ -10,7 +9,6 @@ export interface User {
 	updatedAt: string;
 }
 
-// Keeping IUser for backward compatibility
 export interface IUser {
 	id: number;
 	username: string;
@@ -32,13 +30,12 @@ export interface Movie {
 	rating?: number | null;
 	watchDate?: string | null;
 	review?: string | null;
-	genres?: string | null; // JSON string of genres
+	genres?: string | null;
 	userId: number;
 	createdAt: string;
 	updatedAt: string;
 }
 
-// Input type for creating/updating movies
 export interface MovieInput {
 	title: string;
 	tmdbId: string;
@@ -48,7 +45,7 @@ export interface MovieInput {
 	rating?: number | null;
 	watchDate?: string | null;
 	review?: string | null;
-	genres?: string[]; // Array of genre strings
+	genres?: string[];
 	userId?: number;
 }
 
@@ -62,7 +59,7 @@ export interface IMovie {
 	rating?: number | null;
 	watchDate?: string | null;
 	review?: string | null;
-	genres?: string | null; // JSON string of genres
+	genres?: string | null;
 	userId: number;
 	createdAt: string;
 	updatedAt: string;
@@ -78,7 +75,6 @@ export interface Watchlist {
 	updatedAt: string;
 }
 
-// Input type for creating/updating watchlists
 export interface WatchlistInput {
 	name: string;
 	description?: string | null;
@@ -119,7 +115,7 @@ export interface IFavorite {
 
 export interface AuthPayload {
 	token: string;
-	refreshToken?: string; // Optional for backward compatibility
+	refreshToken?: string;
 	user: User;
 }
 
@@ -129,7 +125,6 @@ export interface JwtPayload {
 	exp?: number;
 }
 
-// API request query parameter types
 export interface PaginationInput {
 	limit?: number;
 	offset?: number;
@@ -144,7 +139,6 @@ export interface SearchInput extends PaginationInput, SortInput {
 	search?: string;
 }
 
-// Movie Review interfaces
 export interface MovieReview {
 	id: number;
 	userId: number;
@@ -156,7 +150,14 @@ export interface MovieReview {
 	updatedAt: string;
 }
 
-// Input type for creating/updating movie reviews
+export interface MovieReviewWithDetails extends MovieReview {
+	user: {
+		id: number;
+		username: string;
+		avatar: string | null;
+	};
+}
+
 export interface MovieReviewInput {
 	content: string;
 	rating?: number | null;
@@ -176,7 +177,6 @@ export interface IMovieReview {
 	updatedAt: string;
 }
 
-// Post related interfaces
 export interface Post {
 	id: number;
 	userId: number;
@@ -191,7 +191,6 @@ export interface Post {
 	updatedAt: string;
 }
 
-// Input type for creating/updating posts
 export interface PostInput {
 	tmdbId: string;
 	posterPath?: string | null;
@@ -215,18 +214,16 @@ export interface PostComment {
 	content: string;
 	createdAt: string;
 	updatedAt: string;
-	username?: string; // For display purposes when returning comments
-	avatar?: string | null; // For display purposes when returning comments
+	username?: string;
+	avatar?: string | null;
 }
 
-// Input type for creating post comments
 export interface PostCommentInput {
 	content: string;
 	userId?: number;
 	postId?: number;
 }
 
-// Search params for posts
 export interface PostSearchInput extends SearchInput {
 	userId?: number;
 	isPublic?: boolean;

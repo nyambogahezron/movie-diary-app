@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 
-// Users table
 export const users = sqliteTable('users', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	username: text('username').notNull().unique(),
@@ -16,7 +15,6 @@ export const users = sqliteTable('users', {
 		.notNull(),
 });
 
-// Movies table
 export const movies = sqliteTable('movies', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	title: text('title').notNull(),
@@ -27,7 +25,7 @@ export const movies = sqliteTable('movies', {
 	rating: integer('rating'),
 	watchDate: text('watch_date'),
 	review: text('review'),
-	genres: text('genres'), // Will store as JSON string
+	genres: text('genres'),
 	userId: integer('user_id')
 		.notNull()
 		.references(() => users.id, { onDelete: 'cascade' }),
@@ -39,7 +37,6 @@ export const movies = sqliteTable('movies', {
 		.notNull(),
 });
 
-// Watchlists table
 export const watchlists = sqliteTable('watchlists', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')
@@ -56,7 +53,6 @@ export const watchlists = sqliteTable('watchlists', {
 		.notNull(),
 });
 
-// WatchlistMovies junction table
 export const watchlistMovies = sqliteTable('watchlist_movies', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	watchlistId: integer('watchlist_id')
@@ -70,7 +66,6 @@ export const watchlistMovies = sqliteTable('watchlist_movies', {
 		.notNull(),
 });
 
-// Favorites table
 export const favorites = sqliteTable('favorites', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')
@@ -84,7 +79,6 @@ export const favorites = sqliteTable('favorites', {
 		.notNull(),
 });
 
-// MovieReviews table
 export const movieReviews = sqliteTable('movie_reviews', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')
@@ -94,7 +88,7 @@ export const movieReviews = sqliteTable('movie_reviews', {
 		.notNull()
 		.references(() => movies.id, { onDelete: 'cascade' }),
 	content: text('content').notNull(),
-	rating: integer('rating'), // Optional rating for the review (1-5 or 1-10)
+	rating: integer('rating'),
 	isPublic: integer('is_public', { mode: 'boolean' }).notNull().default(true),
 	createdAt: text('created_at')
 		.default(sql`CURRENT_TIMESTAMP`)
@@ -104,7 +98,6 @@ export const movieReviews = sqliteTable('movie_reviews', {
 		.notNull(),
 });
 
-// Posts table
 export const posts = sqliteTable('posts', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')
@@ -125,7 +118,6 @@ export const posts = sqliteTable('posts', {
 		.notNull(),
 });
 
-// Post likes table
 export const postLikes = sqliteTable('post_likes', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')
@@ -139,7 +131,6 @@ export const postLikes = sqliteTable('post_likes', {
 		.notNull(),
 });
 
-// Post comments table
 export const postComments = sqliteTable('post_comments', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	userId: integer('user_id')

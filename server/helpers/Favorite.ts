@@ -12,8 +12,12 @@ export class Favorite {
 		const existingFavorite = await db
 			.select()
 			.from(favorites)
-			.where(eq(favorites.userId, favoriteData.userId))
-			.where(eq(favorites.movieId, favoriteData.movieId));
+			.where(
+				and(
+					eq(favorites.userId, favoriteData.userId),
+					eq(favorites.movieId, favoriteData.movieId)
+				)
+			);
 
 		if (existingFavorite.length > 0) {
 			return existingFavorite[0] as unknown as FavoriteType;
@@ -38,8 +42,7 @@ export class Favorite {
 		const result = await db
 			.select()
 			.from(favorites)
-			.where(eq(favorites.userId, userId))
-			.where(eq(favorites.movieId, movieId));
+			.where(and(eq(favorites.userId, userId), eq(favorites.movieId, movieId)));
 
 		return result[0] as unknown as FavoriteType;
 	}

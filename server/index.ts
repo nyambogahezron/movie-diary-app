@@ -81,7 +81,7 @@ app.use('/api/reviews', movieReviewRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-app.get('/health', (_req, res) => {
+app.get('/', (_req, res) => {
 	res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 

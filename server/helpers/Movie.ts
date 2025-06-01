@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { movies } from '../db/schema';
-import { eq, like, desc, asc } from 'drizzle-orm';
+import { eq, like, desc, asc, and, sql } from 'drizzle-orm';
 import { Movie as MovieType, MovieInput, SearchInput } from '../types';
 
 export class Movie {
@@ -15,6 +15,7 @@ export class Movie {
 		// Validate rating if provided
 		if (
 			movieData.rating !== undefined &&
+			movieData.rating !== null &&
 			(movieData.rating < 0 || movieData.rating > 10)
 		) {
 			throw new Error('Rating must be between 0 and 10');
@@ -52,8 +53,7 @@ export class Movie {
 		const result = await db
 			.select()
 			.from(movies)
-			.where(eq(movies.tmdbId, tmdbId))
-			.where(eq(movies.userId, userId));
+			.where(and(eq(movies.tmdbId, tmdbId), eq(movies.userId, userId)));
 		return result[0] as unknown as MovieType;
 	}
 
@@ -61,38 +61,38 @@ export class Movie {
 		userId: number,
 		params?: SearchInput
 	): Promise<MovieType[]> {
-		let query = db.select().from(movies).where(eq(movies.userId, userId));
+		// Prepare the conditions
+		const conditions = [];
+		conditions.push(eq(movies.userId, userId));
 
 		// Add search if provided
 		if (params?.search) {
-			query = query.where(like(movies.title, `%${params.search}%`));
+			conditions.push(like(movies.title, `%${params.search}%`));
 		}
 
-		// Add sorting if provided
-		if (params?.sortBy) {
-			const sortColumn = params.sortBy as keyof typeof movies;
-			if (sortColumn in movies) {
-				if (params.sortOrder === 'desc') {
-					query = query.orderBy(desc(movies[sortColumn]));
-				} else {
-					query = query.orderBy(asc(movies[sortColumn]));
-				}
-			}
-		} else {
-			// Default sort by createdAt desc
-			query = query.orderBy(desc(movies.createdAt));
-		}
+		// Determine sorting column and order
+		let orderByColumn: any = movies.createdAt;
+		let orderByDirection: 'asc' | 'desc' = 'desc';
 
-		// Add pagination if provided
-		if (params?.limit) {
-			query = query.limit(params.limit);
-
-			if (params?.offset) {
-				query = query.offset(params.offset);
+		if (params?.sortBy && params.sortBy in movies) {
+			const column = movies[params.sortBy as keyof typeof movies];
+			if (column && typeof column !== 'function') {
+				orderByColumn = column;
+				orderByDirection = params?.sortOrder === 'desc' ? 'desc' : 'asc';
 			}
 		}
 
-		const result = await query;
+		// Create the base query with where before orderBy, limit, and offset
+		const result = await db
+			.select()
+			.from(movies)
+			.where(and(...conditions))
+			.orderBy(
+				orderByDirection === 'desc' ? desc(orderByColumn) : asc(orderByColumn)
+			)
+			.limit(params?.limit ?? 100)
+			.offset(params?.offset ?? 0);
+
 		return result as unknown as MovieType[];
 	}
 
@@ -100,21 +100,33 @@ export class Movie {
 		id: number,
 		movieData: Partial<MovieInput>
 	): Promise<void> {
-		// Create a copy of the data to modify
-		const dataToUpdate = { ...movieData };
+		// Create a cleaned copy of the data to modify
+		const dataToUpdate: Record<string, any> = {};
+
+		// Copy allowed properties
+		if (movieData.title !== undefined) dataToUpdate.title = movieData.title;
+		if (movieData.tmdbId !== undefined) dataToUpdate.tmdbId = movieData.tmdbId;
+		if (movieData.posterPath !== undefined)
+			dataToUpdate.posterPath = movieData.posterPath;
+		if (movieData.releaseDate !== undefined)
+			dataToUpdate.releaseDate = movieData.releaseDate;
+		if (movieData.overview !== undefined)
+			dataToUpdate.overview = movieData.overview;
+		if (movieData.rating !== undefined) dataToUpdate.rating = movieData.rating;
+		if (movieData.watchDate !== undefined)
+			dataToUpdate.watchDate = movieData.watchDate;
+		if (movieData.review !== undefined) dataToUpdate.review = movieData.review;
+		if (movieData.userId !== undefined) dataToUpdate.userId = movieData.userId;
 
 		// Convert genres array to JSON string if provided
-		if (Array.isArray(dataToUpdate.genres)) {
-			dataToUpdate.genres = JSON.stringify(dataToUpdate.genres);
+		if (Array.isArray(movieData.genres)) {
+			dataToUpdate.genres = JSON.stringify(movieData.genres);
 		}
 
-		await db
-			.update(movies)
-			.set({
-				...dataToUpdate,
-				updatedAt: new Date().toISOString(),
-			})
-			.where(eq(movies.id, id));
+		// Set the updatedAt timestamp
+		dataToUpdate.updatedAt = new Date().toISOString();
+
+		await db.update(movies).set(dataToUpdate).where(eq(movies.id, id));
 	}
 
 	static async delete(id: number): Promise<void> {

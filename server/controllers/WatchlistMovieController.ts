@@ -3,10 +3,8 @@ import { WatchlistMovieService } from '../services/WatchlistMovieService';
 import { SearchInput } from '../types';
 
 export class WatchlistMovieController {
-	// Add a movie to a watchlist
 	static async addMovieToWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -197,11 +195,9 @@ export class WatchlistMovieController {
 			}
 		} catch (error) {
 			console.error('Error getting watchlist movie entries:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while retrieving watchlist movie entries',
-				});
+			res.status(500).json({
+				error: 'An error occurred while retrieving watchlist movie entries',
+			});
 		}
 	}
 
@@ -246,11 +242,9 @@ export class WatchlistMovieController {
 			}
 		} catch (error) {
 			console.error('Error getting watchlist movie entry:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while retrieving watchlist movie entry',
-				});
+			res.status(500).json({
+				error: 'An error occurred while retrieving watchlist movie entry',
+			});
 		}
 	}
 
@@ -304,11 +298,9 @@ export class WatchlistMovieController {
 			}
 		} catch (error) {
 			console.error('Error removing movie from watchlist:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while removing movie from watchlist',
-				});
+			res.status(500).json({
+				error: 'An error occurred while removing movie from watchlist',
+			});
 		}
 	}
 
@@ -352,11 +344,9 @@ export class WatchlistMovieController {
 			}
 		} catch (error) {
 			console.error('Error deleting watchlist movie entry:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while deleting watchlist movie entry',
-				});
+			res.status(500).json({
+				error: 'An error occurred while deleting watchlist movie entry',
+			});
 		}
 	}
 }

@@ -18,9 +18,6 @@ import {
 } from 'drizzle-orm';
 
 export class AnalyticsService {
-	/**
-	 * Get aggregated analytics for all endpoints within a date range
-	 */
 	async getEndpointAnalytics(startDate?: string, endDate?: string) {
 		const currentDate = new Date().toISOString().split('T')[0];
 		const start = startDate || currentDate;
@@ -58,9 +55,6 @@ export class AnalyticsService {
 		};
 	}
 
-	/**
-	 * Get detailed analytics for a specific endpoint
-	 */
 	async getEndpointDetail(
 		endpoint: string,
 		method: string,
@@ -71,7 +65,6 @@ export class AnalyticsService {
 		const start = startDate || currentDate;
 		const end = endDate || currentDate;
 
-		// Get aggregated data for the endpoint
 		const aggregatedData = await db
 			.select({
 				endpoint: endpointAnalytics.endpoint,
@@ -94,7 +87,6 @@ export class AnalyticsService {
 			)
 			.groupBy(endpointAnalytics.endpoint, endpointAnalytics.method);
 
-		// Get daily breakdown for this endpoint
 		const dailyBreakdown = await db
 			.select({
 				date: endpointAnalytics.date,
@@ -113,7 +105,6 @@ export class AnalyticsService {
 			)
 			.orderBy(asc(endpointAnalytics.date));
 
-		// Get recent requests for this endpoint
 		const recentRequests = await db
 			.select({
 				id: requestLogs.id,
@@ -155,9 +146,6 @@ export class AnalyticsService {
 		};
 	}
 
-	/**
-	 * Get aggregated analytics for all users within a date range
-	 */
 	async getUserAnalytics(
 		startDate?: string,
 		endDate?: string,
@@ -184,7 +172,6 @@ export class AnalyticsService {
 			.limit(limit)
 			.offset(offset);
 
-		// Get the total count for pagination
 		const countResult = await db
 			.select({
 				count: sql`COUNT(DISTINCT ${userAnalytics.userId})`,
@@ -202,15 +189,11 @@ export class AnalyticsService {
 		};
 	}
 
-	/**
-	 * Get detailed analytics for a specific user
-	 */
 	async getUserDetail(userId: number, startDate?: string, endDate?: string) {
 		const currentDate = new Date().toISOString().split('T')[0];
 		const start = startDate || currentDate;
 		const end = endDate || currentDate;
 
-		// Get user info
 		const userInfo = await db
 			.select({
 				id: users.id,
@@ -226,7 +209,6 @@ export class AnalyticsService {
 			throw new Error('User not found');
 		}
 
-		// Get aggregated data for the user
 		const aggregatedData = await db
 			.select({
 				totalRequests: sql`SUM(${userAnalytics.totalRequests})`,
@@ -241,7 +223,6 @@ export class AnalyticsService {
 				)
 			);
 
-		// Get daily breakdown for this user
 		const dailyBreakdown = await db
 			.select({
 				date: userAnalytics.date,
@@ -257,7 +238,6 @@ export class AnalyticsService {
 			)
 			.orderBy(asc(userAnalytics.date));
 
-		// Get endpoint usage by this user
 		const endpointUsage = await db
 			.select({
 				endpoint: requestLogs.endpoint,
@@ -276,7 +256,6 @@ export class AnalyticsService {
 			.groupBy(requestLogs.endpoint, requestLogs.method)
 			.orderBy(desc(sql`COUNT(*)`));
 
-		// Get recent activity for this user
 		const recentActivity = await db
 			.select({
 				id: requestLogs.id,

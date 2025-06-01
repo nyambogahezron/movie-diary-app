@@ -3,10 +3,8 @@ import { FavoriteService } from '../services/FavoriteService';
 import { SearchInput } from '../types';
 
 export class FavoriteController {
-	// Add a movie to favorites
 	static async addFavorite(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -55,16 +53,13 @@ export class FavoriteController {
 		}
 	}
 
-	// Get all favorite movies for a user
 	static async getFavorites(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
 			}
 
-			// Parse search, sort and pagination parameters
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {
@@ -113,10 +108,8 @@ export class FavoriteController {
 		}
 	}
 
-	// Remove a movie from favorites
 	static async removeFavorite(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -156,10 +149,8 @@ export class FavoriteController {
 		}
 	}
 
-	// Check if a movie is a favorite
 	static async checkFavorite(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;

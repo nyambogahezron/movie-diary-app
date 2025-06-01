@@ -3,10 +3,8 @@ import { WatchlistService } from '../services/WatchlistService';
 import { SearchInput, WatchlistInput } from '../types';
 
 export class WatchlistController {
-	// Create a new watchlist
 	static async createWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -14,13 +12,11 @@ export class WatchlistController {
 
 			const { name, description, isPublic } = req.body;
 
-			// Validate required fields
 			if (!name) {
 				res.status(400).json({ error: 'Watchlist name is required' });
 				return;
 			}
 
-			// Create watchlist
 			const watchlist = await WatchlistService.createWatchlist(
 				{
 					name,
@@ -47,10 +43,8 @@ export class WatchlistController {
 		}
 	}
 
-	// Get all watchlists for the current user
 	static async getUserWatchlists(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -70,10 +64,8 @@ export class WatchlistController {
 		}
 	}
 
-	// Get public watchlists
 	static async getPublicWatchlists(req: Request, res: Response): Promise<void> {
 		try {
-			// Parse search, sort and pagination parameters
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {
@@ -106,18 +98,14 @@ export class WatchlistController {
 			});
 		} catch (error) {
 			console.error('Error getting public watchlists:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while retrieving public watchlists',
-				});
+			res.status(500).json({
+				error: 'An error occurred while retrieving public watchlists',
+			});
 		}
 	}
 
-	// Get a single watchlist by ID
 	static async getWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -161,10 +149,8 @@ export class WatchlistController {
 		}
 	}
 
-	// Update a watchlist
 	static async updateWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -214,10 +200,8 @@ export class WatchlistController {
 		}
 	}
 
-	// Delete a watchlist
 	static async deleteWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -257,10 +241,8 @@ export class WatchlistController {
 		}
 	}
 
-	// Add a movie to a watchlist
 	static async addMovieToWatchlist(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -304,11 +286,9 @@ export class WatchlistController {
 			}
 		} catch (error) {
 			console.error('Error adding movie to watchlist:', error);
-			res
-				.status(500)
-				.json({
-					error: 'An error occurred while adding the movie to the watchlist',
-				});
+			res.status(500).json({
+				error: 'An error occurred while adding the movie to the watchlist',
+			});
 		}
 	}
 
@@ -362,12 +342,9 @@ export class WatchlistController {
 			}
 		} catch (error) {
 			console.error('Error removing movie from watchlist:', error);
-			res
-				.status(500)
-				.json({
-					error:
-						'An error occurred while removing the movie from the watchlist',
-				});
+			res.status(500).json({
+				error: 'An error occurred while removing the movie from the watchlist',
+			});
 		}
 	}
 

@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { watchlistMovies, watchlists, movies } from '../db/schema';
-import { eq, and, asc, desc, like, SQL } from 'drizzle-orm';
+import { eq, and, asc, desc, like } from 'drizzle-orm';
 import {
 	WatchlistMovie as WatchlistMovieType,
 	Movie as MovieType,
@@ -12,18 +12,20 @@ export class WatchlistMovie {
 		watchlistId: number;
 		movieId: number;
 	}): Promise<WatchlistMovieType> {
-		// Check if the movie is already in the watchlist
 		const existingEntry = await db
 			.select()
 			.from(watchlistMovies)
-			.where(eq(watchlistMovies.watchlistId, data.watchlistId))
-			.where(eq(watchlistMovies.movieId, data.movieId));
+			.where(
+				and(
+					eq(watchlistMovies.watchlistId, data.watchlistId),
+					eq(watchlistMovies.movieId, data.movieId)
+				)
+			);
 
 		if (existingEntry.length > 0) {
 			throw new Error('Movie is already in the watchlist');
 		}
 
-		// Add the movie to the watchlist
 		const result = await db
 			.insert(watchlistMovies)
 			.values({
@@ -32,7 +34,6 @@ export class WatchlistMovie {
 			})
 			.returning();
 
-		// Update the watchlist's updatedAt timestamp
 		await db
 			.update(watchlists)
 			.set({
@@ -56,40 +57,29 @@ export class WatchlistMovie {
 		watchlistId: number,
 		params?: SearchInput
 	): Promise<WatchlistMovieType[]> {
-		let query = db
+		const conditions = [eq(watchlistMovies.watchlistId, watchlistId)];
+
+		const getSortColumn = (sortBy?: string) => {
+			switch (sortBy) {
+				case 'createdAt':
+					return watchlistMovies.createdAt;
+				default:
+					return watchlistMovies.createdAt;
+			}
+		};
+
+		const result = await db
 			.select()
 			.from(watchlistMovies)
-			.where(eq(watchlistMovies.watchlistId, watchlistId));
+			.where(and(...conditions))
+			.orderBy(
+				params?.sortOrder === 'desc'
+					? desc(getSortColumn(params?.sortBy))
+					: asc(getSortColumn(params?.sortBy))
+			)
+			.limit(params?.limit ?? 100)
+			.offset(params?.offset ?? 0);
 
-		// Add sorting if provided
-		if (params?.sortBy) {
-			const sortColumn = params.sortBy as keyof typeof watchlistMovies;
-			if (sortColumn in watchlistMovies) {
-				if (params.sortOrder === 'desc') {
-					query = query.orderBy(
-						desc(watchlistMovies[sortColumn] as SQL<unknown>)
-					);
-				} else {
-					query = query.orderBy(
-						asc(watchlistMovies[sortColumn] as SQL<unknown>)
-					);
-				}
-			}
-		} else {
-			// Default sort by createdAt desc
-			query = query.orderBy(asc(watchlistMovies.createdAt));
-		}
-
-		// Add pagination if provided
-		if (params?.limit) {
-			query = query.limit(params.limit);
-
-			if (params?.offset) {
-				query = query.offset(params.offset);
-			}
-		}
-
-		const result = await query;
 		return result as unknown as WatchlistMovieType[];
 	}
 
@@ -109,8 +99,12 @@ export class WatchlistMovie {
 		const result = await db
 			.select()
 			.from(watchlistMovies)
-			.where(eq(watchlistMovies.watchlistId, watchlistId))
-			.where(eq(watchlistMovies.movieId, movieId));
+			.where(
+				and(
+					eq(watchlistMovies.watchlistId, watchlistId),
+					eq(watchlistMovies.movieId, movieId)
+				)
+			);
 
 		return result[0] as unknown as WatchlistMovieType;
 	}
@@ -119,44 +113,40 @@ export class WatchlistMovie {
 		watchlistId: number,
 		params?: SearchInput
 	): Promise<MovieType[]> {
-		let query = db
+		const conditions = [eq(watchlistMovies.watchlistId, watchlistId)];
+
+		if (params?.search) {
+			conditions.push(like(movies.title, `%${params.search}%`));
+		}
+
+		const getSortColumn = (sortBy?: string) => {
+			switch (sortBy) {
+				case 'title':
+					return movies.title;
+				case 'releaseDate':
+					return movies.releaseDate;
+				case 'rating':
+					return movies.rating;
+				default:
+					return movies.title;
+			}
+		};
+
+		const result = await db
 			.select({
 				movie: movies,
 			})
 			.from(watchlistMovies)
 			.innerJoin(movies, eq(watchlistMovies.movieId, movies.id))
-			.where(eq(watchlistMovies.watchlistId, watchlistId));
+			.where(and(...conditions))
+			.orderBy(
+				params?.sortOrder === 'desc'
+					? desc(getSortColumn(params?.sortBy))
+					: asc(getSortColumn(params?.sortBy))
+			)
+			.limit(params?.limit ?? 100)
+			.offset(params?.offset ?? 0);
 
-		// Add search if provided
-		if (params?.search) {
-			query = query.where(like(movies.title, `%${params.search}%`));
-		}
-
-		// Add sorting if provided
-		if (params?.sortBy) {
-			const sortColumn = params.sortBy as keyof typeof movies;
-			if (sortColumn in movies) {
-				if (params.sortOrder === 'desc') {
-					query = query.orderBy(desc(movies[sortColumn] as SQL<unknown>));
-				} else {
-					query = query.orderBy(asc(movies[sortColumn] as SQL<unknown>));
-				}
-			}
-		} else {
-			// Default sort by title asc
-			query = query.orderBy(asc(movies.title));
-		}
-
-		// Add pagination if provided
-		if (params?.limit) {
-			query = query.limit(params.limit);
-
-			if (params?.offset) {
-				query = query.offset(params.offset);
-			}
-		}
-
-		const result = await query;
 		return result.map((r) => r.movie) as unknown as MovieType[];
 	}
 
@@ -168,7 +158,6 @@ export class WatchlistMovie {
 
 		await db.delete(watchlistMovies).where(eq(watchlistMovies.id, id));
 
-		// Update the watchlist's updatedAt timestamp
 		await db
 			.update(watchlists)
 			.set({
@@ -190,7 +179,6 @@ export class WatchlistMovie {
 				)
 			);
 
-		// Update the watchlist's updatedAt timestamp
 		await db
 			.update(watchlists)
 			.set({
@@ -204,7 +192,6 @@ export class WatchlistMovie {
 			.delete(watchlistMovies)
 			.where(eq(watchlistMovies.watchlistId, watchlistId));
 
-		// Update the watchlist's updatedAt timestamp
 		await db
 			.update(watchlists)
 			.set({
@@ -214,18 +201,15 @@ export class WatchlistMovie {
 	}
 
 	static async deleteAllByMovieId(movieId: number): Promise<void> {
-		// Find all affected watchlists
 		const entries = await this.findByMovieId(movieId);
 		const watchlistIds = [
 			...new Set(entries.map((entry) => entry.watchlistId)),
 		];
 
-		// Delete the entries
 		await db
 			.delete(watchlistMovies)
 			.where(eq(watchlistMovies.movieId, movieId));
 
-		// Update all affected watchlists' updatedAt timestamps
 		for (const watchlistId of watchlistIds) {
 			await db
 				.update(watchlists)

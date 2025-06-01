@@ -19,7 +19,6 @@ export class WatchlistMovieService {
 		movieId: number,
 		user: User
 	): Promise<WatchlistMovieType> {
-		// Check if the watchlist exists and belongs to the user
 		const watchlist = await Watchlist.findById(watchlistId);
 
 		if (!watchlist) {
@@ -32,7 +31,6 @@ export class WatchlistMovieService {
 			);
 		}
 
-		// Check if the movie exists
 		const movie = await Movie.findById(movieId);
 
 		if (!movie) {
@@ -40,7 +38,6 @@ export class WatchlistMovieService {
 		}
 
 		try {
-			// Add the movie to the watchlist
 			return await WatchlistMovie.create({
 				watchlistId,
 				movieId,
@@ -61,7 +58,6 @@ export class WatchlistMovieService {
 		movieId: number,
 		user: User
 	): Promise<void> {
-		// Check if the watchlist exists and belongs to the user
 		const watchlist = await Watchlist.findById(watchlistId);
 
 		if (!watchlist) {
@@ -74,7 +70,6 @@ export class WatchlistMovieService {
 			);
 		}
 
-		// Check if the movie is in the watchlist
 		const watchlistMovie = await WatchlistMovie.findByWatchlistIdAndMovieId(
 			watchlistId,
 			movieId
@@ -84,7 +79,6 @@ export class WatchlistMovieService {
 			throw new NotFoundError('Movie is not in the watchlist');
 		}
 
-		// Remove the movie from the watchlist
 		await WatchlistMovie.deleteByWatchlistIdAndMovieId(watchlistId, movieId);
 	}
 
@@ -99,7 +93,6 @@ export class WatchlistMovieService {
 			throw new NotFoundError('Watchlist not found');
 		}
 
-		// Check if the user can access this watchlist
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
 			throw new AuthorizationError(
 				'You do not have permission to view this watchlist'
@@ -120,7 +113,6 @@ export class WatchlistMovieService {
 			throw new NotFoundError('Watchlist not found');
 		}
 
-		// Check if the user can access this watchlist
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
 			throw new AuthorizationError(
 				'You do not have permission to view this watchlist'
@@ -140,7 +132,6 @@ export class WatchlistMovieService {
 			throw new NotFoundError('Watchlist movie entry not found');
 		}
 
-		// Check if the user can access this watchlist
 		const watchlist = await Watchlist.findById(watchlistMovie.watchlistId);
 
 		if (!watchlist) {
@@ -163,7 +154,6 @@ export class WatchlistMovieService {
 			throw new NotFoundError('Watchlist movie entry not found');
 		}
 
-		// Check if the user can access this watchlist
 		const watchlist = await Watchlist.findById(watchlistMovie.watchlistId);
 
 		if (!watchlist) {

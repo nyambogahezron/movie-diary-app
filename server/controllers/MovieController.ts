@@ -4,10 +4,8 @@ import { FavoriteService } from '../services/FavoriteService';
 import { SearchInput, MovieInput } from '../types';
 
 export class MovieController {
-	// Create or update a movie
 	static async addMovie(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -25,13 +23,11 @@ export class MovieController {
 				genres,
 			} = req.body;
 
-			// Validate required fields
 			if (!title || !tmdbId) {
 				res.status(400).json({ error: 'Title and tmdbId are required' });
 				return;
 			}
 
-			// Add movie
 			const movie = await MovieService.addMovie(
 				{
 					title,
@@ -59,10 +55,8 @@ export class MovieController {
 		}
 	}
 
-	// Get a single movie by ID
 	static async getMovie(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -103,16 +97,13 @@ export class MovieController {
 		}
 	}
 
-	// Get all movies for the current user
 	static async getUserMovies(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
 			}
 
-			// Parse search, sort and pagination parameters
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {
@@ -149,10 +140,8 @@ export class MovieController {
 		}
 	}
 
-	// Update a movie
 	static async updateMovie(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -197,10 +186,8 @@ export class MovieController {
 		}
 	}
 
-	// Delete a movie
 	static async deleteMovie(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -240,10 +227,8 @@ export class MovieController {
 		}
 	}
 
-	// Toggle favorite status of a movie
 	static async toggleFavorite(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -257,21 +242,17 @@ export class MovieController {
 			}
 
 			try {
-				// Check if movie exists
 				const movie = await MovieService.getMovie(movieId, req.user);
 
-				// Check if already favorited
 				const isFavorite = await FavoriteService.isFavorite(movieId, req.user);
 
 				if (isFavorite) {
-					// If already favorited, remove from favorites
 					await FavoriteService.removeFavorite(movieId, req.user);
 					res.status(200).json({
 						message: 'Movie removed from favorites',
 						data: { isFavorite: false },
 					});
 				} else {
-					// If not favorited, add to favorites
 					await FavoriteService.addFavorite(movieId, req.user);
 					res.status(200).json({
 						message: 'Movie added to favorites',
@@ -299,16 +280,13 @@ export class MovieController {
 		}
 	}
 
-	// Get all favorites for the current user
 	static async getFavorites(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
 			}
 
-			// Parse search, sort and pagination parameters
 			const searchParams: SearchInput = {};
 
 			if (req.query.search) {

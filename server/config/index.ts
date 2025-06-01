@@ -2,25 +2,20 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
-// Try to load environment-specific .env file first
 const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
 if (fs.existsSync(path.join(process.cwd(), envFile))) {
 	dotenv.config({ path: envFile });
 } else {
-	// Fall back to default .env file
 	dotenv.config();
 }
 
-// Configuration object
 export const config = {
-	// Server settings
 	server: {
 		port: process.env.PORT || 5000,
 		nodeEnv: process.env.NODE_ENV || 'development',
 		isProduction: process.env.NODE_ENV === 'production',
 	},
 
-	// Security settings
 	security: {
 		jwtSecret: process.env.JWT_SECRET || getSecretKey('jwt'),
 		jwtRefreshSecret:
@@ -34,19 +29,16 @@ export const config = {
 		},
 	},
 
-	// Database settings
 	database: {
 		url: process.env.DATABASE_URL || '',
 	},
 
-	// Rate limit settings
 	rateLimit: {
 		windowMs: 15 * 60 * 1000, // 15 minutes in milliseconds
 		maxRequestsPerWindow: Number(process.env.RATE_LIMIT_MAX) || 100,
 	},
 };
 
-// Generate a secure key if one doesn't exist
 function getSecretKey(name: string): string {
 	const crypto = require('crypto');
 	console.warn(
@@ -55,7 +47,6 @@ function getSecretKey(name: string): string {
 	return crypto.randomBytes(64).toString('hex');
 }
 
-// Validate essential configurations
 function validateConfig() {
 	const requiredConfigs: Record<string, string | undefined> = {
 		JWT_SECRET: process.env.JWT_SECRET,

@@ -2,12 +2,10 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 
 export class AuthController {
-	// Register a new user
 	static async register(req: Request, res: Response): Promise<void> {
 		try {
 			const { username, email, password } = req.body;
 
-			// Validate request body
 			if (!username || !email || !password) {
 				res
 					.status(400)
@@ -15,10 +13,8 @@ export class AuthController {
 				return;
 			}
 
-			// Register the user
 			const authPayload = await AuthService.register(username, email, password);
 
-			// Set refresh token in HTTP-only cookie
 			if (authPayload.refreshToken) {
 				res.cookie('refreshToken', authPayload.refreshToken, {
 					httpOnly: true,
@@ -28,7 +24,6 @@ export class AuthController {
 				});
 			}
 
-			// Return the auth token and user info
 			res.status(201).json({
 				message: 'User registered successfully',
 				data: {
@@ -53,21 +48,17 @@ export class AuthController {
 		}
 	}
 
-	// Login a user
 	static async login(req: Request, res: Response): Promise<void> {
 		try {
 			const { email, password } = req.body;
 
-			// Validate request body
 			if (!email || !password) {
 				res.status(400).json({ error: 'Email and password are required' });
 				return;
 			}
 
-			// Login the user
 			const authPayload = await AuthService.login(email, password);
 
-			// Set refresh token in HTTP-only cookie
 			if (authPayload.refreshToken) {
 				res.cookie('refreshToken', authPayload.refreshToken, {
 					httpOnly: true,
@@ -77,7 +68,6 @@ export class AuthController {
 				});
 			}
 
-			// Return the auth token and user info
 			res.status(200).json({
 				message: 'Login successful',
 				data: {
@@ -102,16 +92,13 @@ export class AuthController {
 		}
 	}
 
-	// Get current user profile
 	static async getCurrentUser(req: Request, res: Response): Promise<void> {
 		try {
-			// User is already attached to req by the auth middleware
 			if (!req.user) {
 				res.status(401).json({ error: 'Not authenticated' });
 				return;
 			}
 
-			// Return user info
 			res.status(200).json({
 				message: 'User profile retrieved successfully',
 				data: {
@@ -132,10 +119,8 @@ export class AuthController {
 		}
 	}
 
-	// Refresh access token
 	static async refreshToken(req: Request, res: Response): Promise<void> {
 		try {
-			// Get refresh token from cookie
 			const refreshToken = req.cookies.refreshToken;
 
 			// Validate request

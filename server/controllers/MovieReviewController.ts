@@ -3,10 +3,8 @@ import { MovieReviewService } from '../services/MovieReviewService';
 import { MovieReviewInput } from '../types';
 
 export class MovieReviewController {
-	// Create a new movie review
 	static async addReview(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -20,13 +18,11 @@ export class MovieReviewController {
 
 			const { content, rating, isPublic } = req.body;
 
-			// Validate required fields
 			if (!content) {
 				res.status(400).json({ error: 'Review content is required' });
 				return;
 			}
 
-			// Validate rating if provided
 			if (
 				rating !== undefined &&
 				(isNaN(Number(rating)) || Number(rating) < 1 || Number(rating) > 10)
@@ -73,10 +69,8 @@ export class MovieReviewController {
 		}
 	}
 
-	// Get all reviews for a movie
 	static async getMovieReviews(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
@@ -114,10 +108,8 @@ export class MovieReviewController {
 		}
 	}
 
-	// Get a single review by ID
 	static async getReview(req: Request, res: Response): Promise<void> {
 		try {
-			// Check authentication
 			if (!req.user) {
 				res.status(401).json({ error: 'Authentication required' });
 				return;
