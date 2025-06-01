@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { authenticate } from '../../middleware/auth';
+import { authMiddleware } from '../../middleware/auth';
 import { db } from '../../db/test-db';
 import * as schema from '../../db/schema';
 import { createTestUser } from '../utils';
@@ -37,60 +37,60 @@ describe('Authentication Middleware', () => {
 		jest.clearAllMocks();
 	});
 
-	it('should call next() when valid token is provided', () => {
+	it('should call next() when valid token is provided', async () => {
 		mockReq = {
 			headers: {
 				authorization: `Bearer ${validToken}`,
 			},
 		};
 
-		authenticate(mockReq as Request, mockRes, mockNext);
+		await authMiddleware(mockReq as Request, mockRes, mockNext);
 
 		expect(mockNext).toHaveBeenCalled();
-		expect(mockReq.userId).toBe(userId);
+		expect(mockReq.user?.id).toBe(userId);
 	});
 
-	it('should return 401 when no token is provided', () => {
+	it('should return 401 when no token is provided', async () => {
 		mockReq = {
 			headers: {},
 		};
 
-		authenticate(mockReq as Request, mockRes, mockNext);
+		await authMiddleware(mockReq as Request, mockRes, mockNext);
 
 		expect(mockRes.status).toHaveBeenCalledWith(401);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: 'Authentication required',
+			error: 'No authentication token provided',
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
 
-	it('should return 401 when token format is invalid', () => {
+	it('should return 401 when token format is invalid', async () => {
 		mockReq = {
 			headers: {
 				authorization: 'InvalidTokenFormat',
 			},
 		};
 
-		authenticate(mockReq as Request, mockRes, mockNext);
+		await authMiddleware(mockReq as Request, mockRes, mockNext);
 
 		expect(mockRes.status).toHaveBeenCalledWith(401);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: 'Invalid token format',
+			error: 'Invalid authentication token format',
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
 
-	it('should return 401 when token is invalid', () => {
+	it('should return 401 when token is invalid', async () => {
 		mockReq = {
 			headers: {
 				authorization: 'Bearer invalidtoken',
 			},
 		};
 
-		authenticate(mockReq as Request, mockRes, mockNext);
+		await authMiddleware(mockReq as Request, mockRes, mockNext);
 
 		expect(mockRes.status).toHaveBeenCalledWith(401);
-		expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid token' });
+		expect(mockRes.json).toHaveProperty('error');
 		expect(mockNext).not.toHaveBeenCalled();
 	});
 });

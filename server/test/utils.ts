@@ -32,7 +32,7 @@ export async function createTestUser(userData = {}) {
 }
 
 // Helper to create a test movie
-export async function createTestMovie(movieData = {}, userId) {
+export async function createTestMovie(movieData = {}, userId: number) {
 	const defaultMovieData = {
 		title: 'Test Movie',
 		tmdbId: '12345',
@@ -53,7 +53,7 @@ export async function createTestMovie(movieData = {}, userId) {
 }
 
 // Helper to create a test watchlist
-export async function createTestWatchlist(watchlistData = {}, userId) {
+export async function createTestWatchlist(watchlistData = {}, userId: number) {
 	const defaultWatchlistData = {
 		name: 'Test Watchlist',
 		description: 'Test description',

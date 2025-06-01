@@ -4,6 +4,7 @@ import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { db } from '../../db/test-db';
 import * as schema from '../../db/schema';
 import { createTestUser, createTestMovie } from '../utils';
+import { sql } from 'drizzle-orm';
 
 describe('MovieController', () => {
 	const app = createTestApp();

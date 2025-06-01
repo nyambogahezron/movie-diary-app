@@ -1,2 +1,5 @@
 node_modules/
 .env
+dist/
+db/migrations/
+db/database.sqlite3

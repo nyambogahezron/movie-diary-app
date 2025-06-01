@@ -4,25 +4,26 @@ import * as schema from '../../db/schema';
 import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { createTestUser, createTestMovie, createTestWatchlist } from '../utils';
 import { eq, and } from 'drizzle-orm';
+import { User as UserType } from '../../types';
 
 describe('WatchlistMovieService', () => {
-	let userId: number;
+	let user: UserType;
 	let watchlistId: number;
 	let movieId: number;
 
 	beforeAll(async () => {
 		await setupTestDatabase();
 		// Create test user, watchlist and movie
-		const { user } = await createTestUser();
-		userId = user.id;
+		const { user: testUser } = await createTestUser();
+		user = testUser;
 
 		const watchlist = await createTestWatchlist(
 			{ name: 'Test Watchlist' },
-			userId
+			user.id
 		);
 		watchlistId = watchlist.id;
 
-		const movie = await createTestMovie({ title: 'Test Movie' }, userId);
+		const movie = await createTestMovie({ title: 'Test Movie' }, user.id);
 		movieId = movie.id;
 	});
 
@@ -39,7 +40,8 @@ describe('WatchlistMovieService', () => {
 		it('should add a movie to watchlist and return it', async () => {
 			const result = await WatchlistMovieService.addMovieToWatchlist(
 				watchlistId,
-				movieId
+				movieId,
+				user
 			);
 
 			expect(result).toHaveProperty('id');
@@ -62,8 +64,8 @@ describe('WatchlistMovieService', () => {
 
 			// Try to add it again
 			await expect(
-				WatchlistMovieService.addMovieToWatchlist(watchlistId, movieId)
-			).rejects.toThrow('Movie already in watchlist');
+				WatchlistMovieService.addMovieToWatchlist(watchlistId, movieId, user)
+			).rejects.toThrow('Movie is already in the watchlist');
 		});
 
 		it('should throw error if watchlist does not exist', async () => {
@@ -72,28 +74,45 @@ describe('WatchlistMovieService', () => {
 			await expect(
 				WatchlistMovieService.addMovieToWatchlist(
 					nonExistentWatchlistId,
-					movieId
+					movieId,
+					user
 				)
 			).rejects.toThrow('Watchlist not found');
 		});
+
+		it('should throw error if user does not have permission', async () => {
+			// Create a watchlist owned by a different user
+			const otherUserWatchlist = await createTestWatchlist(
+				{ name: 'Other User Watchlist' },
+				999
+			);
+
+			await expect(
+				WatchlistMovieService.addMovieToWatchlist(
+					otherUserWatchlist.id,
+					movieId,
+					user
+				)
+			).rejects.toThrow('You do not have permission to modify this watchlist');
+		});
 	});
 
-	describe('getMoviesByWatchlistId', () => {
+	describe('getWatchlistMovies', () => {
 		beforeEach(async () => {
 			// Create test movies
 			const movie1 = await createTestMovie(
 				{ title: 'Watchlist Movie 1' },
-				userId
+				user.id
 			);
 			const movie2 = await createTestMovie(
 				{ title: 'Watchlist Movie 2' },
-				userId
+				user.id
 			);
 
 			// Create another watchlist
 			const otherWatchlist = await createTestWatchlist(
 				{ name: 'Other Watchlist' },
-				userId
+				user.id
 			);
 
 			// Add movies to watchlists
@@ -105,8 +124,9 @@ describe('WatchlistMovieService', () => {
 		});
 
 		it('should return movies for the specified watchlist', async () => {
-			const movies = await WatchlistMovieService.getMoviesByWatchlistId(
-				watchlistId
+			const movies = await WatchlistMovieService.getWatchlistMovies(
+				watchlistId,
+				user
 			);
 
 			expect(movies).toBeInstanceOf(Array);
@@ -121,35 +141,20 @@ describe('WatchlistMovieService', () => {
 			const nonExistentWatchlistId = 9999;
 
 			await expect(
-				WatchlistMovieService.getMoviesByWatchlistId(nonExistentWatchlistId)
+				WatchlistMovieService.getWatchlistMovies(nonExistentWatchlistId, user)
 			).rejects.toThrow('Watchlist not found');
 		});
-	});
 
-	describe('isMovieInWatchlist', () => {
-		beforeEach(async () => {
-			// Add movie to watchlist
-			await db.insert(schema.watchlistMovies).values({
-				watchlistId,
-				movieId,
-			});
-		});
-
-		it('should return true if movie is in watchlist', async () => {
-			const result = await WatchlistMovieService.isMovieInWatchlist(
-				watchlistId,
-				movieId
+		it('should throw error if user does not have permission', async () => {
+			// Create a private watchlist owned by a different user
+			const otherUserWatchlist = await createTestWatchlist(
+				{ name: 'Private Watchlist', isPublic: false },
+				999
 			);
-			expect(result).toBe(true);
-		});
 
-		it('should return false if movie is not in watchlist', async () => {
-			const nonExistentMovieId = 9999;
-			const result = await WatchlistMovieService.isMovieInWatchlist(
-				watchlistId,
-				nonExistentMovieId
-			);
-			expect(result).toBe(false);
+			await expect(
+				WatchlistMovieService.getWatchlistMovies(otherUserWatchlist.id, user)
+			).rejects.toThrow('You do not have permission to view this watchlist');
 		});
 	});
 
@@ -162,13 +167,12 @@ describe('WatchlistMovieService', () => {
 			});
 		});
 
-		it('should remove movie from watchlist and return success', async () => {
-			const success = await WatchlistMovieService.removeMovieFromWatchlist(
+		it('should remove movie from watchlist', async () => {
+			await WatchlistMovieService.removeMovieFromWatchlist(
 				watchlistId,
-				movieId
+				movieId,
+				user
 			);
-
-			expect(success).toBe(true);
 
 			// Check database
 			const watchlistMovies = await db
@@ -184,13 +188,15 @@ describe('WatchlistMovieService', () => {
 			expect(watchlistMovies.length).toBe(0);
 		});
 
-		it('should return false when watchlist-movie relationship does not exist', async () => {
+		it('should throw error when movie is not in watchlist', async () => {
 			const nonExistentMovieId = 9999;
-			const success = await WatchlistMovieService.removeMovieFromWatchlist(
-				watchlistId,
-				nonExistentMovieId
-			);
-			expect(success).toBe(false);
+			await expect(
+				WatchlistMovieService.removeMovieFromWatchlist(
+					watchlistId,
+					nonExistentMovieId,
+					user
+				)
+			).rejects.toThrow('Movie is not in the watchlist');
 		});
 
 		it('should throw error if watchlist does not exist', async () => {
@@ -199,9 +205,26 @@ describe('WatchlistMovieService', () => {
 			await expect(
 				WatchlistMovieService.removeMovieFromWatchlist(
 					nonExistentWatchlistId,
-					movieId
+					movieId,
+					user
 				)
 			).rejects.toThrow('Watchlist not found');
+		});
+
+		it('should throw error if user does not have permission', async () => {
+			// Create a watchlist owned by a different user
+			const otherUserWatchlist = await createTestWatchlist(
+				{ name: 'Other User Watchlist' },
+				999
+			);
+
+			await expect(
+				WatchlistMovieService.removeMovieFromWatchlist(
+					otherUserWatchlist.id,
+					movieId,
+					user
+				)
+			).rejects.toThrow('You do not have permission to modify this watchlist');
 		});
 	});
 });

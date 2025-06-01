@@ -4,6 +4,7 @@ import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { db } from '../../db/test-db';
 import * as schema from '../../db/schema';
 import bcrypt from 'bcrypt';
+import { sql } from 'drizzle-orm';
 
 describe('AuthController', () => {
 	const app = createTestApp();

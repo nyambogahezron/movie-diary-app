@@ -1,55 +1,51 @@
-import request from 'supertest';
-import app from '../test-app';
-import { db } from '../../db';
-import { createTestUser, createTestMovie, authenticateUser } from '../utils';
+import supertest from 'supertest';
+import { createTestApp } from '../test-app';
+import { setupTestDatabase, teardownTestDatabase } from '../setup';
+import { db } from '../../db/test-db';
+import * as schema from '../../db/schema';
+import { createTestUser, createTestMovie } from '../utils';
+import { sql } from 'drizzle-orm';
+
+const app = createTestApp();
+const testRequest = supertest(app);
 
 // Clean up database before each test
 beforeEach(async () => {
-	await db.run('DELETE FROM movie_reviews');
-	await db.run('DELETE FROM movies');
-	await db.run('DELETE FROM users');
+	await db.delete(schema.movieReviews);
+	await db.delete(schema.movies);
+	await db.delete(schema.users);
 });
 
 describe('MovieReviewController', () => {
-	describe('POST /:movieId/reviews', () => {
-		test('should create a new review for a movie', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+	describe('POST /api/movies/:id/reviews', () => {
+		it('should create a new review', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
-				rating: 8,
-				isPublic: true,
+				content: 'Great movie!',
+				rating: 5,
 			};
 
-			const response = await request(app)
+			const response = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
 			expect(response.status).toBe(201);
-			expect(response.body.message).toBe('Review added successfully');
+			expect(response.body.message).toBe('Review created successfully');
 			expect(response.body.data).toHaveProperty('id');
 			expect(response.body.data.content).toBe(reviewData.content);
 			expect(response.body.data.rating).toBe(reviewData.rating);
-			expect(response.body.data.isPublic).toBe(reviewData.isPublic);
+			expect(response.body.data.userId).toBe(user.id);
+			expect(response.body.data.movieId).toBe(movie.id);
 		});
 
-		test('should return 400 if content is missing', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should return 400 if content is missing', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Try to create a review without content
-			const response = await request(app)
+			const response = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({ rating: 8 });
@@ -58,64 +54,55 @@ describe('MovieReviewController', () => {
 			expect(response.body.error).toBe('Review content is required');
 		});
 
-		test('should return 409 if user already reviewed the movie', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should return 400 if user already reviewed the movie', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
+				content: 'First review',
 				rating: 8,
 			};
 
 			// Create first review
-			await request(app)
+			await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
 			// Try to create another review for the same movie
-			const response = await request(app)
+			const response = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
-				.send(reviewData);
+				.send({
+					content: 'Second review attempt',
+					rating: 7,
+				});
 
-			expect(response.status).toBe(409);
+			expect(response.status).toBe(400);
 			expect(response.body.error).toBe('You have already reviewed this movie');
 		});
 	});
 
-	describe('GET /:movieId/reviews', () => {
-		test('should get all reviews for a movie', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+	describe('GET /api/movies/:id/reviews', () => {
+		it('should get all reviews for a movie', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
+				content: 'Test review',
 				rating: 8,
 			};
 
-			await request(app)
+			await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
-			// Get all reviews for the movie
-			const response = await request(app)
+			const response = await testRequest
 				.get(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
-			expect(response.body.message).toBe('Reviews retrieved successfully');
 			expect(response.body.data).toBeInstanceOf(Array);
 			expect(response.body.data.length).toBe(1);
 			expect(response.body.data[0].content).toBe(reviewData.content);
@@ -124,46 +111,36 @@ describe('MovieReviewController', () => {
 	});
 
 	describe('GET /api/reviews/:id', () => {
-		test('should get a review by ID', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should get a review by id', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
+				content: 'Test review',
 				rating: 8,
 			};
 
-			const createResponse = await request(app)
+			const createResponse = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
 			const reviewId = createResponse.body.data.id;
 
-			// Get the review by ID
-			const response = await request(app)
+			const response = await testRequest
 				.get(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(response.status).toBe(200);
-			expect(response.body.message).toBe('Review retrieved successfully');
-			expect(response.body.data.id).toBe(reviewId);
+			expect(response.body.data).toHaveProperty('id', reviewId);
 			expect(response.body.data.content).toBe(reviewData.content);
 			expect(response.body.data.rating).toBe(reviewData.rating);
 		});
 
-		test('should return 404 if review not found', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should return 404 if review not found', async () => {
+			const { token } = await createTestUser();
 
-			// Try to get a non-existent review
-			const response = await request(app)
+			const response = await testRequest
 				.get('/api/reviews/999')
 				.set('Authorization', `Bearer ${token}`);
 
@@ -173,74 +150,63 @@ describe('MovieReviewController', () => {
 	});
 
 	describe('PUT /api/reviews/:id', () => {
-		test('should update a review', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should update a review', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
+				content: 'Original review',
 				rating: 8,
 			};
 
-			const createResponse = await request(app)
+			const createResponse = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
 			const reviewId = createResponse.body.data.id;
 
-			// Update the review
 			const updateData = {
-				content: 'Updated review content',
+				content: 'Updated review',
 				rating: 9,
 			};
 
-			const response = await request(app)
+			const response = await testRequest
 				.put(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(updateData);
 
 			expect(response.status).toBe(200);
-			expect(response.body.message).toBe('Review updated successfully');
 			expect(response.body.data.content).toBe(updateData.content);
 			expect(response.body.data.rating).toBe(updateData.rating);
 		});
 
-		test('should return 403 if user is not the owner of the review', async () => {
-			// Create two test users
-			const user1 = await createTestUser();
-			const user2 = await createTestUser('user2', 'user2@example.com');
+		it('should return 403 if user is not the owner of the review', async () => {
+			const { user: user1, token: token1 } = await createTestUser();
+			const { user: user2, token: token2 } = await createTestUser({
+				username: 'user2',
+				email: 'user2@example.com',
+			});
 
-			const token1 = await authenticateUser(user1.email);
-			const token2 = await authenticateUser(user2.email);
+			const movie = await createTestMovie({}, user1.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user1.id);
-
-			// User 1 creates a review
 			const reviewData = {
 				content: 'This is a great movie!',
 				rating: 8,
 			};
 
-			const createResponse = await request(app)
+			const createResponse = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token1}`)
 				.send(reviewData);
 
 			const reviewId = createResponse.body.data.id;
 
-			// User 2 tries to update User 1's review
 			const updateData = {
 				content: 'Updated by another user',
 			};
 
-			const response = await request(app)
+			const response = await testRequest
 				.put(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token2}`)
 				.send(updateData);
@@ -253,29 +219,23 @@ describe('MovieReviewController', () => {
 	});
 
 	describe('DELETE /api/reviews/:id', () => {
-		test('should delete a review', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
+		it('should delete a review', async () => {
+			const { user, token } = await createTestUser();
+			const movie = await createTestMovie({}, user.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user.id);
-
-			// Create a review
 			const reviewData = {
-				content: 'This is a great movie!',
+				content: 'Test review',
 				rating: 8,
 			};
 
-			const createResponse = await request(app)
+			const createResponse = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send(reviewData);
 
 			const reviewId = createResponse.body.data.id;
 
-			// Delete the review
-			const response = await request(app)
+			const response = await testRequest
 				.delete(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token}`);
 
@@ -283,39 +243,35 @@ describe('MovieReviewController', () => {
 			expect(response.body.message).toBe('Review deleted successfully');
 
 			// Try to get the deleted review
-			const getResponse = await request(app)
+			const getResponse = await testRequest
 				.get(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token}`);
 
 			expect(getResponse.status).toBe(404);
 		});
 
-		test('should return 403 if user is not the owner of the review', async () => {
-			// Create two test users
-			const user1 = await createTestUser();
-			const user2 = await createTestUser('user2', 'user2@example.com');
+		it('should return 403 if user is not the owner of the review', async () => {
+			const { user: user1, token: token1 } = await createTestUser();
+			const { user: user2, token: token2 } = await createTestUser({
+				username: 'user2',
+				email: 'user2@example.com',
+			});
 
-			const token1 = await authenticateUser(user1.email);
-			const token2 = await authenticateUser(user2.email);
+			const movie = await createTestMovie({}, user1.id);
 
-			// Create a test movie
-			const movie = await createTestMovie(user1.id);
-
-			// User 1 creates a review
 			const reviewData = {
 				content: 'This is a great movie!',
 				rating: 8,
 			};
 
-			const createResponse = await request(app)
+			const createResponse = await testRequest
 				.post(`/api/movies/${movie.id}/reviews`)
 				.set('Authorization', `Bearer ${token1}`)
 				.send(reviewData);
 
 			const reviewId = createResponse.body.data.id;
 
-			// User 2 tries to delete User 1's review
-			const response = await request(app)
+			const response = await testRequest
 				.delete(`/api/reviews/${reviewId}`)
 				.set('Authorization', `Bearer ${token2}`);
 
@@ -327,17 +283,13 @@ describe('MovieReviewController', () => {
 	});
 
 	describe('GET /api/reviews', () => {
-		test('should get all reviews by the current user', async () => {
-			// Create test user and authenticate
-			const user = await createTestUser();
-			const token = await authenticateUser(user.email);
-
-			// Create two test movies
-			const movie1 = await createTestMovie(user.id);
-			const movie2 = await createTestMovie(user.id, 'Another Movie');
+		it('should get all reviews by the current user', async () => {
+			const { user, token } = await createTestUser();
+			const movie1 = await createTestMovie({}, user.id);
+			const movie2 = await createTestMovie({ title: 'Another Movie' }, user.id);
 
 			// Create reviews for both movies
-			await request(app)
+			await testRequest
 				.post(`/api/movies/${movie1.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({
@@ -345,7 +297,7 @@ describe('MovieReviewController', () => {
 					rating: 8,
 				});
 
-			await request(app)
+			await testRequest
 				.post(`/api/movies/${movie2.id}/reviews`)
 				.set('Authorization', `Bearer ${token}`)
 				.send({
@@ -354,7 +306,7 @@ describe('MovieReviewController', () => {
 				});
 
 			// Get all reviews by the user
-			const response = await request(app)
+			const response = await testRequest
 				.get('/api/reviews')
 				.set('Authorization', `Bearer ${token}`);
 

@@ -1,4 +1,5 @@
 import { AuthService } from '../../services/AuthService';
+import { User } from '../../helpers/User';
 import { db } from '../../db/test-db';
 import * as schema from '../../db/schema';
 import { setupTestDatabase, teardownTestDatabase } from '../setup';
@@ -162,7 +163,7 @@ describe('AuthService', () => {
 		});
 
 		it('should return user when valid ID is provided', async () => {
-			const user = await AuthService.getUserById(userId);
+			const user = await User.findById(userId);
 
 			expect(user).toHaveProperty('id', userId);
 			expect(user).toHaveProperty('username', 'getbyiduser');
@@ -170,7 +171,7 @@ describe('AuthService', () => {
 		});
 
 		it('should return null when user does not exist', async () => {
-			const user = await AuthService.getUserById(9999);
+			const user = await User.findById(9999);
 			expect(user).toBeNull();
 		});
 	});

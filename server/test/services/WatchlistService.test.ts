@@ -4,15 +4,16 @@ import * as schema from '../../db/schema';
 import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { createTestUser } from '../utils';
 import { eq } from 'drizzle-orm';
+import { User as UserType } from '../../types';
 
 describe('WatchlistService', () => {
-	let userId: number;
+	let user: UserType;
 
 	beforeAll(async () => {
 		await setupTestDatabase();
 		// Create a test user
-		const { user } = await createTestUser();
-		userId = user.id;
+		const { user: testUser } = await createTestUser();
+		user = testUser;
 	});
 
 	afterAll(async () => {
@@ -32,25 +33,26 @@ describe('WatchlistService', () => {
 				isPublic: true,
 			};
 
-			const result = await WatchlistService.createWatchlist({
-				...watchlistData,
-				userId,
-			});
+			const result = await WatchlistService.createWatchlist(
+				watchlistData,
+				user
+			);
 
 			expect(result).toHaveProperty('id');
 			expect(result).toHaveProperty('name', watchlistData.name);
 			expect(result).toHaveProperty('description', watchlistData.description);
 			expect(result).toHaveProperty('isPublic', watchlistData.isPublic);
+			expect(result).toHaveProperty('userId', user.id);
 
 			// Check database
 			const watchlists = await db.select().from(schema.watchlists);
 			expect(watchlists.length).toBe(1);
 			expect(watchlists[0].name).toBe(watchlistData.name);
-			expect(watchlists[0].userId).toBe(userId);
+			expect(watchlists[0].userId).toBe(user.id);
 		});
 	});
 
-	describe('getWatchlistsByUserId', () => {
+	describe('getWatchlists', () => {
 		beforeEach(async () => {
 			// Create test watchlists
 			await db.insert(schema.watchlists).values([
@@ -58,13 +60,13 @@ describe('WatchlistService', () => {
 					name: 'Watchlist 1',
 					description: 'Test 1',
 					isPublic: false,
-					userId,
+					userId: user.id,
 				},
 				{
 					name: 'Watchlist 2',
 					description: 'Test 2',
 					isPublic: true,
-					userId,
+					userId: user.id,
 				},
 				{
 					name: 'Watchlist 3',
@@ -76,7 +78,7 @@ describe('WatchlistService', () => {
 		});
 
 		it('should return only watchlists for the specified user', async () => {
-			const watchlists = await WatchlistService.getWatchlistsByUserId(userId);
+			const watchlists = await WatchlistService.getWatchlists(user);
 
 			expect(watchlists).toBeInstanceOf(Array);
 			expect(watchlists.length).toBe(2);
@@ -87,7 +89,7 @@ describe('WatchlistService', () => {
 		});
 	});
 
-	describe('getWatchlistById', () => {
+	describe('getWatchlist', () => {
 		let watchlistId: number;
 
 		beforeEach(async () => {
@@ -98,7 +100,7 @@ describe('WatchlistService', () => {
 					name: 'Get By ID Watchlist',
 					description: 'Test description',
 					isPublic: false,
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
@@ -106,15 +108,34 @@ describe('WatchlistService', () => {
 		});
 
 		it('should return watchlist when valid ID is provided', async () => {
-			const watchlist = await WatchlistService.getWatchlistById(watchlistId);
+			const watchlist = await WatchlistService.getWatchlist(watchlistId, user);
 
 			expect(watchlist).toHaveProperty('id', watchlistId);
 			expect(watchlist).toHaveProperty('name', 'Get By ID Watchlist');
+			expect(watchlist).toHaveProperty('userId', user.id);
 		});
 
-		it('should return null when watchlist does not exist', async () => {
-			const watchlist = await WatchlistService.getWatchlistById(9999);
-			expect(watchlist).toBeNull();
+		it('should throw error when watchlist does not exist', async () => {
+			await expect(WatchlistService.getWatchlist(9999, user)).rejects.toThrow(
+				'Watchlist not found'
+			);
+		});
+
+		it('should throw error when user does not have permission', async () => {
+			// Create a watchlist owned by a different user
+			const otherUserWatchlist = await db
+				.insert(schema.watchlists)
+				.values({
+					name: 'Private Watchlist',
+					description: 'Private description',
+					isPublic: false,
+					userId: 999,
+				})
+				.returning();
+
+			await expect(
+				WatchlistService.getWatchlist(otherUserWatchlist[0].id, user)
+			).rejects.toThrow('You do not have permission to view this watchlist');
 		});
 	});
 
@@ -129,7 +150,7 @@ describe('WatchlistService', () => {
 					name: 'Original Name',
 					description: 'Original description',
 					isPublic: false,
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
@@ -145,7 +166,8 @@ describe('WatchlistService', () => {
 
 			const result = await WatchlistService.updateWatchlist(
 				watchlistId,
-				updateData
+				updateData,
+				user
 			);
 
 			expect(result).toHaveProperty('id', watchlistId);
@@ -163,11 +185,31 @@ describe('WatchlistService', () => {
 			expect(watchlists[0].isPublic).toBe(updateData.isPublic);
 		});
 
-		it('should return null when watchlist does not exist', async () => {
-			const result = await WatchlistService.updateWatchlist(9999, {
-				name: 'Updated Name',
-			});
-			expect(result).toBeNull();
+		it('should throw error when watchlist does not exist', async () => {
+			await expect(
+				WatchlistService.updateWatchlist(9999, { name: 'Updated Name' }, user)
+			).rejects.toThrow('Watchlist not found');
+		});
+
+		it('should throw error when user does not have permission', async () => {
+			// Create a watchlist owned by a different user
+			const otherUserWatchlist = await db
+				.insert(schema.watchlists)
+				.values({
+					name: 'Private Watchlist',
+					description: 'Private description',
+					isPublic: false,
+					userId: 999,
+				})
+				.returning();
+
+			await expect(
+				WatchlistService.updateWatchlist(
+					otherUserWatchlist[0].id,
+					{ name: 'Updated Name' },
+					user
+				)
+			).rejects.toThrow('You do not have permission to update this watchlist');
 		});
 	});
 
@@ -182,17 +224,15 @@ describe('WatchlistService', () => {
 					name: 'Delete Me',
 					description: 'To be deleted',
 					isPublic: false,
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
 			watchlistId = result[0].id;
 		});
 
-		it('should delete watchlist and return success', async () => {
-			const success = await WatchlistService.deleteWatchlist(watchlistId);
-
-			expect(success).toBe(true);
+		it('should delete watchlist', async () => {
+			await WatchlistService.deleteWatchlist(watchlistId, user);
 
 			// Check database
 			const watchlists = await db
@@ -203,9 +243,27 @@ describe('WatchlistService', () => {
 			expect(watchlists.length).toBe(0);
 		});
 
-		it('should return false when watchlist does not exist', async () => {
-			const success = await WatchlistService.deleteWatchlist(9999);
-			expect(success).toBe(false);
+		it('should throw error when watchlist does not exist', async () => {
+			await expect(
+				WatchlistService.deleteWatchlist(9999, user)
+			).rejects.toThrow('Watchlist not found');
+		});
+
+		it('should throw error when user does not have permission', async () => {
+			// Create a watchlist owned by a different user
+			const otherUserWatchlist = await db
+				.insert(schema.watchlists)
+				.values({
+					name: 'Private Watchlist',
+					description: 'Private description',
+					isPublic: false,
+					userId: 999,
+				})
+				.returning();
+
+			await expect(
+				WatchlistService.deleteWatchlist(otherUserWatchlist[0].id, user)
+			).rejects.toThrow('You do not have permission to delete this watchlist');
 		});
 	});
 });

@@ -3,19 +3,20 @@ import { db } from '../../db/test-db';
 import * as schema from '../../db/schema';
 import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { createTestUser, createTestMovie } from '../utils';
+import { User as UserType } from '../../types';
 import { eq, and } from 'drizzle-orm';
 
 describe('FavoriteService', () => {
-	let userId: number;
+	let user: UserType;
 	let movieId: number;
 
 	beforeAll(async () => {
 		await setupTestDatabase();
-		// Create a test user and movie
-		const { user } = await createTestUser();
-		userId = user.id;
+		// Create test user and movie
+		const { user: testUser } = await createTestUser();
+		user = testUser;
 
-		const movie = await createTestMovie({ title: 'Test Movie' }, userId);
+		const movie = await createTestMovie({ title: 'Test Movie' }, user.id);
 		movieId = movie.id;
 	});
 
@@ -30,63 +31,70 @@ describe('FavoriteService', () => {
 
 	describe('addFavorite', () => {
 		it('should add a movie to favorites and return it', async () => {
-			const result = await FavoriteService.addFavorite(userId, movieId);
+			const result = await FavoriteService.addFavorite(movieId, user);
 
 			expect(result).toHaveProperty('id');
-			expect(result).toHaveProperty('userId', userId);
+			expect(result).toHaveProperty('userId', user.id);
 			expect(result).toHaveProperty('movieId', movieId);
 
 			// Check database
 			const favorites = await db.select().from(schema.favorites);
 			expect(favorites.length).toBe(1);
-			expect(favorites[0].userId).toBe(userId);
+			expect(favorites[0].userId).toBe(user.id);
 			expect(favorites[0].movieId).toBe(movieId);
 		});
 
 		it('should throw error if movie is already in favorites', async () => {
 			// First add the movie to favorites
 			await db.insert(schema.favorites).values({
-				userId,
+				userId: user.id,
 				movieId,
 			});
 
 			// Try to add it again
+			await expect(FavoriteService.addFavorite(movieId, user)).rejects.toThrow(
+				'Movie already in favorites'
+			);
+		});
+
+		it('should throw error if movie does not exist', async () => {
+			const nonExistentMovieId = 9999;
+
 			await expect(
-				FavoriteService.addFavorite(userId, movieId)
-			).rejects.toThrow('Movie already in favorites');
+				FavoriteService.addFavorite(nonExistentMovieId, user)
+			).rejects.toThrow('Movie not found');
 		});
 	});
 
-	describe('getFavoriteMoviesByUserId', () => {
+	describe('getFavoriteMovies', () => {
 		beforeEach(async () => {
 			// Create test movies
 			const movie1 = await createTestMovie(
 				{ title: 'Favorite Movie 1' },
-				userId
+				user.id
 			);
 			const movie2 = await createTestMovie(
 				{ title: 'Favorite Movie 2' },
-				userId
+				user.id
 			);
-			const movie3 = await createTestMovie({ title: 'Not Favorite', userId });
+			const movie3 = await createTestMovie({ title: 'Not Favorite' }, user.id);
 
 			// Add movies to favorites
 			await db.insert(schema.favorites).values([
-				{ userId, movieId: movie1.id },
-				{ userId, movieId: movie2.id },
-				{ userId: 999, movieId: movie3.id }, // Different user's favorite
+				{ userId: user.id, movieId: movie1.id },
+				{ userId: user.id, movieId: movie2.id },
 			]);
 		});
 
-		it('should return favorite movies for the specified user', async () => {
-			const movies = await FavoriteService.getFavoriteMoviesByUserId(userId);
+		it('should return favorite movies for the user', async () => {
+			const movies = await FavoriteService.getFavoriteMovies(user);
 
 			expect(movies).toBeInstanceOf(Array);
 			expect(movies.length).toBe(2);
 			expect(movies[0]).toHaveProperty('title');
-			expect(movies.map((m) => m.title)).toContain('Favorite Movie 1');
-			expect(movies.map((m) => m.title)).toContain('Favorite Movie 2');
-			expect(movies.map((m) => m.title)).not.toContain('Not Favorite');
+			expect(movies.map((m: any) => m.title)).toContain('Favorite Movie 1');
+			expect(movies.map((m: any) => m.title)).toContain('Favorite Movie 2');
+			expect(movies.map((m: any) => m.title)).not.toContain('Not Favorite');
 		});
 	});
 
@@ -94,22 +102,19 @@ describe('FavoriteService', () => {
 		beforeEach(async () => {
 			// Add movie to favorites
 			await db.insert(schema.favorites).values({
-				userId,
+				userId: user.id,
 				movieId,
 			});
 		});
 
 		it('should return true if movie is in favorites', async () => {
-			const result = await FavoriteService.isFavorite(userId, movieId);
+			const result = await FavoriteService.isFavorite(movieId, user);
 			expect(result).toBe(true);
 		});
 
 		it('should return false if movie is not in favorites', async () => {
 			const nonExistentMovieId = 9999;
-			const result = await FavoriteService.isFavorite(
-				userId,
-				nonExistentMovieId
-			);
+			const result = await FavoriteService.isFavorite(nonExistentMovieId, user);
 			expect(result).toBe(false);
 		});
 	});
@@ -118,15 +123,13 @@ describe('FavoriteService', () => {
 		beforeEach(async () => {
 			// Add movie to favorites
 			await db.insert(schema.favorites).values({
-				userId,
+				userId: user.id,
 				movieId,
 			});
 		});
 
-		it('should remove movie from favorites and return success', async () => {
-			const success = await FavoriteService.removeFavorite(userId, movieId);
-
-			expect(success).toBe(true);
+		it('should remove movie from favorites', async () => {
+			await FavoriteService.removeFavorite(movieId, user);
 
 			// Check database
 			const favorites = await db
@@ -134,7 +137,7 @@ describe('FavoriteService', () => {
 				.from(schema.favorites)
 				.where(
 					and(
-						eq(schema.favorites.userId, userId),
+						eq(schema.favorites.userId, user.id),
 						eq(schema.favorites.movieId, movieId)
 					)
 				);
@@ -142,13 +145,11 @@ describe('FavoriteService', () => {
 			expect(favorites.length).toBe(0);
 		});
 
-		it('should return false when favorite does not exist', async () => {
+		it('should throw error when favorite relationship does not exist', async () => {
 			const nonExistentMovieId = 9999;
-			const success = await FavoriteService.removeFavorite(
-				userId,
-				nonExistentMovieId
-			);
-			expect(success).toBe(false);
+			await expect(
+				FavoriteService.removeFavorite(nonExistentMovieId, user)
+			).rejects.toThrow('Movie is not in favorites');
 		});
 	});
 });

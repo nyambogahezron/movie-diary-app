@@ -4,15 +4,16 @@ import * as schema from '../../db/schema';
 import { setupTestDatabase, teardownTestDatabase } from '../setup';
 import { createTestUser } from '../utils';
 import { eq } from 'drizzle-orm';
+import { User as UserType } from '../../types';
 
 describe('MovieService', () => {
-	let userId: number;
+	let user: UserType;
 
 	beforeAll(async () => {
 		await setupTestDatabase();
 		// Create a test user
-		const { user } = await createTestUser();
-		userId = user.id;
+		const { user: testUser } = await createTestUser();
+		user = testUser;
 	});
 
 	afterAll(async () => {
@@ -24,7 +25,7 @@ describe('MovieService', () => {
 		await db.delete(schema.movies);
 	});
 
-	describe('createMovie', () => {
+	describe('addMovie', () => {
 		it('should create a new movie and return it', async () => {
 			const movieData = {
 				title: 'Test Movie',
@@ -32,13 +33,10 @@ describe('MovieService', () => {
 				posterPath: '/test/poster.jpg',
 				releaseDate: '2023-01-01',
 				overview: 'Test overview',
-				genres: JSON.stringify(['Action', 'Drama']),
+				genres: ['Action', 'Drama'] as string[],
 			};
 
-			const result = await MovieService.createMovie({
-				...movieData,
-				userId,
-			});
+			const result = await MovieService.addMovie(movieData, user);
 
 			expect(result).toHaveProperty('id');
 			expect(result).toHaveProperty('title', movieData.title);
@@ -49,23 +47,23 @@ describe('MovieService', () => {
 			const movies = await db.select().from(schema.movies);
 			expect(movies.length).toBe(1);
 			expect(movies[0].title).toBe(movieData.title);
-			expect(movies[0].userId).toBe(userId);
+			expect(movies[0].userId).toBe(user.id);
 		});
 	});
 
-	describe('getMoviesByUserId', () => {
+	describe('getUserMovies', () => {
 		beforeEach(async () => {
 			// Create test movies
 			await db.insert(schema.movies).values([
 				{
 					title: 'Movie 1',
 					tmdbId: '111',
-					userId,
+					userId: user.id,
 				},
 				{
 					title: 'Movie 2',
 					tmdbId: '222',
-					userId,
+					userId: user.id,
 				},
 				{
 					title: 'Movie 3',
@@ -76,18 +74,24 @@ describe('MovieService', () => {
 		});
 
 		it('should return only movies for the specified user', async () => {
-			const movies = await MovieService.getMoviesByUserId(userId);
+			const movies = await MovieService.getUserMovies(user);
 
 			expect(movies).toBeInstanceOf(Array);
 			expect(movies.length).toBe(2);
 			expect(movies[0]).toHaveProperty('title');
-			expect(movies.map((m) => m.title)).toContain('Movie 1');
-			expect(movies.map((m) => m.title)).toContain('Movie 2');
-			expect(movies.map((m) => m.title)).not.toContain('Movie 3');
+			expect(movies.map((m: { title: string }) => m.title)).toContain(
+				'Movie 1'
+			);
+			expect(movies.map((m: { title: string }) => m.title)).toContain(
+				'Movie 2'
+			);
+			expect(movies.map((m: { title: string }) => m.title)).not.toContain(
+				'Movie 3'
+			);
 		});
 	});
 
-	describe('getMovieById', () => {
+	describe('getMovie', () => {
 		let movieId: number;
 
 		beforeEach(async () => {
@@ -97,7 +101,7 @@ describe('MovieService', () => {
 				.values({
 					title: 'Get By ID Movie',
 					tmdbId: '12345',
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
@@ -105,15 +109,17 @@ describe('MovieService', () => {
 		});
 
 		it('should return movie when valid ID is provided', async () => {
-			const movie = await MovieService.getMovieById(movieId);
+			const movie = await MovieService.getMovie(movieId, user);
 
 			expect(movie).toHaveProperty('id', movieId);
 			expect(movie).toHaveProperty('title', 'Get By ID Movie');
+			expect(movie).toHaveProperty('isFavorite', false);
 		});
 
-		it('should return null when movie does not exist', async () => {
-			const movie = await MovieService.getMovieById(9999);
-			expect(movie).toBeNull();
+		it('should throw error when movie does not exist', async () => {
+			await expect(MovieService.getMovie(9999, user)).rejects.toThrow(
+				'Movie not found'
+			);
 		});
 	});
 
@@ -128,7 +134,7 @@ describe('MovieService', () => {
 					title: 'Original Title',
 					tmdbId: '12345',
 					overview: 'Original overview',
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
@@ -142,7 +148,7 @@ describe('MovieService', () => {
 				review: 'Great movie!',
 			};
 
-			const result = await MovieService.updateMovie(movieId, updateData);
+			const result = await MovieService.updateMovie(movieId, updateData, user);
 
 			expect(result).toHaveProperty('id', movieId);
 			expect(result).toHaveProperty('title', updateData.title);
@@ -160,11 +166,10 @@ describe('MovieService', () => {
 			expect(movies[0].rating).toBe(updateData.rating);
 		});
 
-		it('should return null when movie does not exist', async () => {
-			const result = await MovieService.updateMovie(9999, {
-				title: 'Updated Title',
-			});
-			expect(result).toBeNull();
+		it('should throw error when movie does not exist', async () => {
+			await expect(
+				MovieService.updateMovie(9999, { title: 'Updated Title' }, user)
+			).rejects.toThrow('Movie not found');
 		});
 	});
 
@@ -178,17 +183,15 @@ describe('MovieService', () => {
 				.values({
 					title: 'Delete Me',
 					tmdbId: '12345',
-					userId,
+					userId: user.id,
 				})
 				.returning();
 
 			movieId = result[0].id;
 		});
 
-		it('should delete movie and return success', async () => {
-			const success = await MovieService.deleteMovie(movieId);
-
-			expect(success).toBe(true);
+		it('should delete movie', async () => {
+			await MovieService.deleteMovie(movieId, user);
 
 			// Check database
 			const movies = await db
@@ -199,9 +202,10 @@ describe('MovieService', () => {
 			expect(movies.length).toBe(0);
 		});
 
-		it('should return false when movie does not exist', async () => {
-			const success = await MovieService.deleteMovie(9999);
-			expect(success).toBe(false);
+		it('should throw error when movie does not exist', async () => {
+			await expect(MovieService.deleteMovie(9999, user)).rejects.toThrow(
+				'Movie not found'
+			);
 		});
 	});
 });

@@ -1,5 +1,5 @@
-import { client, db } from './db/test-db';
-import * as schema from './db/schema';
+import { client, db } from '../db/test-db';
+import * as schema from '../db/schema';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 
 // Setup function to run before all tests
