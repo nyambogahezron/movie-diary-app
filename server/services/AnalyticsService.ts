@@ -1,21 +1,7 @@
 import { db } from '../db';
-import {
-	requestLogs,
-	userAnalytics,
-	endpointAnalytics,
-} from '../db/analyticsSchema';
+import { requestLogs, userAnalytics, endpointAnalytics } from '../db/schema';
 import { users } from '../db/schema';
-import {
-	eq,
-	and,
-	sql,
-	between,
-	desc,
-	gte,
-	like,
-	asc,
-	count,
-} from 'drizzle-orm';
+import { eq, and, sql, between, desc, asc } from 'drizzle-orm';
 
 export class AnalyticsService {
 	async getEndpointAnalytics(startDate?: string, endDate?: string) {

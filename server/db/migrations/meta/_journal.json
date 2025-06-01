@@ -1,1 +1,13 @@
-{"version":"5","entries":[]}
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1748792043089,
+      "tag": "0000_awesome_freak",
+      "breakpoints": true
+    }
+  ]
+}

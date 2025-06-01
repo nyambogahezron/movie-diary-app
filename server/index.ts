@@ -89,7 +89,7 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
 	console.log(
-		`Server is running on port ${PORT} in ${config.server.nodeEnv} mode`
+		`Server is running  http://localhost:${PORT} in ${config.server.nodeEnv} mode`
 	);
 });
 

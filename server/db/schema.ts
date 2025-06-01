@@ -147,3 +147,45 @@ export const postComments = sqliteTable('post_comments', {
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 });
+
+export const requestLogs = sqliteTable('request_logs', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id').references(() => users.id),
+	method: text('method').notNull(),
+	path: text('path').notNull(),
+	endpoint: text('endpoint').notNull(),
+	statusCode: integer('status_code').notNull(),
+	responseTime: integer('response_time').notNull(),
+	timestamp: text('timestamp')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	userAgent: text('user_agent'),
+	ipAddress: text('ip_address'),
+	contentLength: integer('content_length'),
+	query: text('query'),
+	body: text('body'),
+});
+
+export const userAnalytics = sqliteTable('user_analytics', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id').references(() => users.id),
+	totalRequests: integer('total_requests').notNull().default(0),
+	lastActivity: text('last_activity')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+	avgResponseTime: integer('avg_response_time').notNull().default(0),
+	date: text('date').notNull(),
+});
+
+export const endpointAnalytics = sqliteTable('endpoint_analytics', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	endpoint: text('endpoint').notNull(), // Normalized endpoint path
+	method: text('method').notNull(),
+	totalRequests: integer('total_requests').notNull().default(0),
+	avgResponseTime: integer('avg_response_time').notNull().default(0),
+	minResponseTime: integer('min_response_time'),
+	maxResponseTime: integer('max_response_time'),
+	successCount: integer('success_count').notNull().default(0),
+	errorCount: integer('error_count').notNull().default(0),
+	date: text('date').notNull(),
+});

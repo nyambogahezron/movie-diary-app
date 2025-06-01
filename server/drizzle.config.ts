@@ -6,11 +6,8 @@ dotenv.config();
 export default {
 	schema: './db/schema.ts',
 	out: './db/migrations',
-	driver: 'd1-http',
 	dialect: 'sqlite',
 	dbCredentials: {
-		accountId: process.env.D1_ACCOUNT_ID || '',
-		databaseId: process.env.D1_DATABASE_ID || '',
-		token: process.env.D1_TOKEN || '',
+		url: process.env.DATABASE_URL || 'file:./db/database.sqlite3',
 	},
 } satisfies Config;

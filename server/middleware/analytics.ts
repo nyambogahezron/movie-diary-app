@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../db';
-import { requestLogs } from '../db/analyticsSchema';
+import { requestLogs } from '../db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { userAnalytics, endpointAnalytics } from '../db/analyticsSchema';
+import { userAnalytics, endpointAnalytics } from '../db/schema';
 
 const normalizeEndpoint = (path: string): string => {
 	return path.replace(/\/[0-9]+(?=\/|$)/g, '/:id');
