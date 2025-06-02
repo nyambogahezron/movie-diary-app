@@ -5,9 +5,9 @@ import UserAvatar from '@/components/UserAvatar';
 import Colors from '@/constants/Colors';
 import { useSocialFeed } from '@/hooks/useSocialFeed';
 import { SocialPost } from '@/types/Social';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useRouter } from 'expo-router';
 import { Heart, MessageCircle, Share2 } from 'lucide-react-native';
-import { useState } from 'react';
 import {
 	FlatList,
 	StyleSheet,
@@ -16,9 +16,14 @@ import {
 	View,
 } from 'react-native';
 
-export default function SocialScreen() {
+const Tab = createMaterialTopTabNavigator();
+
+const SocialFeedContent = ({
+	filter,
+}: {
+	filter: 'following' | 'popular' | 'discover';
+}) => {
 	const { posts, isLoading, error } = useSocialFeed();
-	const [activeTab, setActiveTab] = useState('following');
 	const router = useRouter();
 
 	if (error) {
@@ -29,18 +34,6 @@ export default function SocialScreen() {
 			</View>
 		);
 	}
-
-	const renderTabButton = (tab: string, label: string) => (
-		<TouchableOpacity
-			style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
-			onPress={() => setActiveTab(tab)}
-		>
-			<Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-				{label}
-			</Text>
-			{activeTab === tab && <View style={styles.tabIndicator} />}
-		</TouchableOpacity>
-	);
 
 	const renderPostItem = ({ item }: { item: SocialPost }) => (
 		<TouchableOpacity
@@ -85,31 +78,51 @@ export default function SocialScreen() {
 	);
 
 	return (
+		<View style={styles.contentContainer}>
+			{posts.length > 0 ? (
+				<FlatList
+					data={posts}
+					renderItem={renderPostItem}
+					keyExtractor={(item) => item.id.toString()}
+					contentContainerStyle={styles.listContent}
+					showsVerticalScrollIndicator={false}
+				/>
+			) : (
+				<EmptyState
+					message='No posts to show'
+					subMessage='Follow users to see their activity here'
+				/>
+			)}
+		</View>
+	);
+};
+
+const FollowingTab = () => <SocialFeedContent filter='following' />;
+const PopularTab = () => <SocialFeedContent filter='popular' />;
+const DiscoverTab = () => <SocialFeedContent filter='discover' />;
+
+export default function SocialScreen() {
+	return (
 		<View style={styles.container}>
 			<View style={styles.header}>
 				<Text style={styles.title}>Social Feed</Text>
 			</View>
-			<View style={styles.tabsContainer}>
-				{renderTabButton('following', 'Following')}
-				{renderTabButton('popular', 'Popular')}
-				{renderTabButton('discover', 'Discover')}
-			</View>
-			<View style={styles.contentContainer}>
-				{posts.length > 0 ? (
-					<FlatList
-						data={posts}
-						renderItem={renderPostItem}
-						keyExtractor={(item) => item.id.toString()}
-						contentContainerStyle={styles.listContent}
-						showsVerticalScrollIndicator={false}
-					/>
-				) : (
-					<EmptyState
-						message='No posts to show'
-						subMessage='Follow users to see their activity here'
-					/>
-				)}
-			</View>
+			<Tab.Navigator
+				screenOptions={{
+					tabBarStyle: styles.tabBar,
+					tabBarLabelStyle: styles.tabLabel,
+					tabBarIndicatorStyle: styles.tabIndicator,
+					tabBarActiveTintColor: Colors.neutral[50],
+					tabBarInactiveTintColor: Colors.neutral[400],
+					sceneStyle: {
+						backgroundColor: Colors.neutral[950],
+					},
+				}}
+			>
+				<Tab.Screen name='Following' component={FollowingTab} />
+				<Tab.Screen name='Popular' component={PopularTab} />
+				<Tab.Screen name='Discover' component={DiscoverTab} />
+			</Tab.Navigator>
 		</View>
 	);
 }
@@ -129,38 +142,26 @@ const styles = StyleSheet.create({
 		fontSize: 28,
 		color: Colors.neutral[50],
 	},
-	tabsContainer: {
-		flexDirection: 'row',
-		paddingHorizontal: 16,
+	tabBar: {
+		backgroundColor: Colors.neutral[950],
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.neutral[800],
+		elevation: 0,
+		shadowOpacity: 0,
+	},
+	tabLabel: {
+		fontFamily: 'Inter-Medium',
+		fontSize: 16,
+		textTransform: 'none',
+	},
+	tabIndicator: {
+		backgroundColor: Colors.primary[500],
+		height: 3,
+		borderTopLeftRadius: 3,
+		borderTopRightRadius: 3,
 	},
 	contentContainer: {
 		flex: 1,
-	},
-	tabButton: {
-		paddingVertical: 16,
-		marginRight: 24,
-		position: 'relative',
-	},
-	tabButtonActive: {},
-	tabText: {
-		fontFamily: 'Inter-Medium',
-		fontSize: 16,
-		color: Colors.neutral[400],
-	},
-	tabTextActive: {
-		color: Colors.neutral[50],
-	},
-	tabIndicator: {
-		position: 'absolute',
-		bottom: -1,
-		left: 0,
-		right: 0,
-		height: 3,
-		backgroundColor: Colors.primary[500],
-		borderTopLeftRadius: 3,
-		borderTopRightRadius: 3,
 	},
 	listContent: {
 		padding: 16,
