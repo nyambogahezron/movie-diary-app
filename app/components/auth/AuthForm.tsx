@@ -1,8 +1,14 @@
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail, Text } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+	Pressable,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View,
+} from 'react-native';
 
 interface AuthFormProps {
 	mode: 'login' | 'signup';
@@ -78,17 +84,20 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
 			<View>
 				<View className='mb-4'>
-					<View className='relative'>
+					<View className='relative flex items-start justify-between'>
 						<TextInput
 							id='email'
 							value={email}
 							onChangeText={setEmail}
 							placeholder='Email'
-							className='w-full bg-gray-700 text-white px-4 py-3 pl-10 rounded focus:outline-none focus:ring-2 focus:ring-red-600'
-						/>
-						<Mail
-							className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-							size={20}
+							placeholderTextColor={'#9ca3af'}
+							onFocus={() => setError('')}
+							autoCapitalize='none'
+							autoComplete='email'
+							autoCorrect={false}
+							keyboardType='email-address'
+							style={{ fontFamily: 'Inter-Regular' }}
+							className='w-full bg-gray-700 text-white px-4 py-3 p-10 rounded focus:outline-none  '
 						/>
 					</View>
 				</View>
@@ -100,16 +109,18 @@ export default function AuthForm({ mode }: AuthFormProps) {
 							id='password'
 							value={password}
 							onChangeText={setPassword}
+							placeholderTextColor={'#9ca3af'}
+							onFocus={() => setError('')}
+							autoCapitalize='none'
+							autoComplete='password'
+							autoCorrect={false}
+							style={{ fontFamily: 'Inter-Regular' }}
 							placeholder='Password'
-							className='w-full bg-gray-700 text-white px-4 py-3 pl-10 rounded focus:outline-none focus:ring-2 focus:ring-red-600'
-						/>
-						<Lock
-							className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400'
-							size={20}
+							className='w-full bg-gray-700 text-white px-4 py-3 p-10 rounded focus:outline-none '
 						/>
 						<TouchableOpacity
 							onPress={() => setShowPassword(!showPassword)}
-							className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400'
+							className='absolute right-3 top-1/2 transform -translate-y-[10px] text-gray-400'
 						>
 							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
 						</TouchableOpacity>

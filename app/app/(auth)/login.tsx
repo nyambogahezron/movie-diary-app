@@ -2,7 +2,7 @@ import AuthForm from '@/components/auth/AuthForm';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 
 export default function Login() {
 	const navigate = useRouter();
@@ -16,16 +16,17 @@ export default function Login() {
 
 	return (
 		<View className='min-h-screen'>
-			{/* Background image with overlay */}
-			{/* <View
-				className='absolute inset-0 bg-cover bg-center z-0'
-				style={{
-					backgroundImage: `url(https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg)`,
-					filter: 'brightness(30%)',
+			<Image
+				source={{
+					uri: 'https://images.pexels.com/photos/7991579/pexels-photo-7991579.jpeg',
 				}}
-			></View> */}
+				className='absolute inset-0 bg-cover bg-center z-0'
+				style={{ opacity: 0.9, flex: 1 }}
+				blurRadius={4}
+				resizeMode='cover'
+			/>
 
-			<View className='relative z-10 min-h-screen flex items-center justify-center px-4 py-20'>
+			<View className='relative z-10 min-h-screen flex items-center justify-center px-4 py-20 '>
 				<AuthForm mode='login' />
 			</View>
 		</View>

@@ -7,5 +7,5 @@ const {
 const config = getDefaultConfig(__dirname);
 
 module.exports = wrapWithReanimatedMetroConfig(
-	withNativeWind(config, { input: '.app/global.css' })
+	withNativeWind(config, { input: './app/global.css' })
 );
