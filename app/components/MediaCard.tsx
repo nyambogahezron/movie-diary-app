@@ -1,5 +1,6 @@
 import Colors from '@/constants/Colors';
 import { Media } from '@/types/Media';
+import { useRouter } from 'expo-router';
 import { Plus, Star } from 'lucide-react-native';
 import {
 	Dimensions,
@@ -19,8 +20,14 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.38;
 
 export default function MediaCard({ media, type }: MediaCardProps) {
+	const router = useRouter();
+
+	const handlePress = () => {
+		router.push(`/media/${media.id}`);
+	};
+
 	return (
-		<TouchableOpacity style={styles.container}>
+		<TouchableOpacity style={styles.container} onPress={handlePress}>
 			<View style={styles.imageContainer}>
 				<Image
 					source={{ uri: media.posterUrl }}

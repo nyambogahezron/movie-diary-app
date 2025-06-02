@@ -52,8 +52,9 @@ const styles = StyleSheet.create({
 	tabBar: {
 		backgroundColor: Colors.neutral[900],
 		borderTopWidth: 0,
-		paddingTop: 8,
-		height: 64,
+		paddingTop: 10,
+		paddingBottom: 50,
+		height: 105,
 	},
 	tabBarLabel: {
 		fontFamily: 'Inter-Medium',

@@ -10,7 +10,8 @@ import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import './global.css';
 
 SystemUI.setBackgroundColorAsync('#030712');
@@ -39,7 +40,7 @@ export default function RootLayout() {
 	}
 
 	return (
-		<View style={{ flex: 1 }}>
+		<GestureHandlerRootView style={{ flex: 1 }}>
 			<AuthProvider>
 				<Stack screenOptions={{ headerShown: false }}>
 					<Stack.Screen name='index' options={{ headerShown: false }} />
@@ -48,6 +49,6 @@ export default function RootLayout() {
 				</Stack>
 				<StatusBar style='auto' />
 			</AuthProvider>
-		</View>
+		</GestureHandlerRootView>
 	);
 }
