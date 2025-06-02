@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
 		height: 256,
 		alignItems: 'center',
 		justifyContent: 'center',
-		marginBottom: 24,
+		marginBottom: 35,
 	},
 	card: {
 		width: 224,

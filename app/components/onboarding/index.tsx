@@ -1,10 +1,10 @@
-import { ArrowRight } from 'lucide-react-native';
+import { ArrowRight, ChevronLeft } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
+	Dimensions,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
-	useWindowDimensions,
 	View,
 } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -14,13 +14,14 @@ import SocialAnimation from './steps/SocialAnimation';
 import TrackAnimation from './steps/TrackAnimation';
 import WatchlistAnimation from './steps/WatchlistAnimation';
 
+const { width } = Dimensions.get('window');
+
 interface OnboardingProps {
 	onComplete: () => void;
 }
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
 	const [currentSlide, setCurrentSlide] = useState(0);
-	const { width } = useWindowDimensions();
 
 	const goToNextSlide = useCallback(() => {
 		if (currentSlide === slides.length - 1) {
@@ -29,6 +30,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 			setCurrentSlide((prev) => prev + 1);
 		}
 	}, [currentSlide, onComplete]);
+
+	const goToPreviousSlide = useCallback(() => {
+		if (currentSlide > 0) {
+			setCurrentSlide((prev) => prev - 1);
+		}
+	}, [currentSlide]);
 
 	const getAnimationComponent = (id: string) => {
 		switch (id) {
@@ -47,9 +54,22 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
 	return (
 		<View style={styles.container}>
-			<TouchableOpacity style={styles.skipButton} onPress={onComplete}>
-				<Text style={styles.skipText}>Skip</Text>
-			</TouchableOpacity>
+			<View style={styles.header}>
+				{/* previous btn */}
+				{currentSlide > 0 && (
+					<TouchableOpacity
+						style={[styles.skipButton, { left: 24 }]}
+						onPress={goToPreviousSlide}
+					>
+						<ChevronLeft size={20} color='#9CA3AF' />
+					</TouchableOpacity>
+				)}
+
+				{/* skip btn */}
+				<TouchableOpacity style={styles.skipButton} onPress={onComplete}>
+					<Text style={styles.skipText}>Skip</Text>
+				</TouchableOpacity>
+			</View>
 
 			<View style={styles.content}>
 				<Animated.View
@@ -97,6 +117,12 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#111827',
 	},
+	header: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingHorizontal: 24,
+	},
 	skipButton: {
 		position: 'absolute',
 		top: 48,
@@ -112,6 +138,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
+		marginTop: 35,
 	},
 	slide: {
 		alignItems: 'center',
@@ -123,6 +150,7 @@ const styles = StyleSheet.create({
 		color: '#fff',
 		textAlign: 'center',
 		marginBottom: 16,
+		marginTop: 28,
 	},
 	description: {
 		fontSize: 16,
@@ -150,13 +178,16 @@ const styles = StyleSheet.create({
 		backgroundColor: '#8B5CF6',
 	},
 	button: {
-		backgroundColor: '#8B5CF6',
+		borderWidth: 1,
+		borderColor: '#8B5CF6',
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 		paddingHorizontal: 32,
 		paddingVertical: 16,
 		borderRadius: 9999,
+		marginBottom: 30,
+		width: width - 48,
 	},
 	buttonText: {
 		color: '#fff',

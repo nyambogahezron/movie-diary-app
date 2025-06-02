@@ -1,8 +1,16 @@
 import { router } from 'expo-router';
 import { Film } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+	Dimensions,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from 'react-native';
 import Onboarding from '../components/onboarding';
+
+const { width } = Dimensions.get('window');
 
 export default function Index() {
 	const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -17,22 +25,30 @@ export default function Index() {
 
 	return (
 		<View style={styles.container}>
-			<Film size={64} color='#8B5CF6' style={styles.icon} />
-			<Text style={styles.title}>Welcome to MovieDiary</Text>
-			<Text style={styles.subtitle}>
-				Your personal movie journey begins here.
-			</Text>
-			<TouchableOpacity style={styles.button} activeOpacity={0.8}>
-				<Text style={styles.buttonText}>Get Started</Text>
-			</TouchableOpacity>
+			<View style={{ alignItems: 'center' }}>
+				<Film size={100} color='#8B5CF6' style={styles.icon} />
+				<Text style={styles.title}>Welcome to MovieDiary</Text>
+				<Text style={styles.subtitle}>
+					Your personal movie journey begins here.
+				</Text>
+			</View>
+			<View>
+				<TouchableOpacity
+					style={styles.button}
+					activeOpacity={0.8}
+					onPress={() => router.push('/(auth)/register')}
+				>
+					<Text style={styles.buttonText}>Register</Text>
+				</TouchableOpacity>
 
-			<TouchableOpacity
-				style={[styles.button, { marginTop: 16 }]}
-				onPress={() => router.push('/login')}
-				activeOpacity={0.8}
-			>
-				<Text style={styles.buttonText}>Login</Text>
-			</TouchableOpacity>
+				<TouchableOpacity
+					style={[styles.button, { marginTop: 16 }]}
+					onPress={() => router.push('/login')}
+					activeOpacity={0.8}
+				>
+					<Text style={styles.buttonText}>Login</Text>
+				</TouchableOpacity>
+			</View>
 		</View>
 	);
 }
@@ -41,7 +57,7 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		alignItems: 'center',
-		justifyContent: 'center',
+		justifyContent: 'space-around',
 		padding: 24,
 		backgroundColor: '#111827',
 	},
@@ -62,10 +78,14 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 	},
 	button: {
-		backgroundColor: '#8B5CF6',
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+		borderColor: '#8B5CF6',
 		paddingHorizontal: 32,
 		paddingVertical: 16,
 		borderRadius: 9999,
+		width: width - 48,
 	},
 	buttonText: {
 		color: '#fff',
