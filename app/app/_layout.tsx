@@ -1,5 +1,4 @@
 import { AuthProvider } from '@/context/AuthContext';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import {
 	Inter_400Regular,
 	Inter_500Medium,
@@ -19,8 +18,6 @@ SystemUI.setBackgroundColorAsync('#030712');
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-	useFrameworkReady();
-
 	const [fontsLoaded, fontError] = useFonts({
 		'Inter-Regular': Inter_400Regular,
 		'Inter-Medium': Inter_500Medium,
