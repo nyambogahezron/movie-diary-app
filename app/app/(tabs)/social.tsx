@@ -104,9 +104,6 @@ const DiscoverTab = () => <SocialFeedContent filter='discover' />;
 export default function SocialScreen() {
 	return (
 		<View style={styles.container}>
-			<View style={styles.header}>
-				<Text style={styles.title}>Social Feed</Text>
-			</View>
 			<Tab.Navigator
 				screenOptions={{
 					tabBarStyle: styles.tabBar,
@@ -114,6 +111,8 @@ export default function SocialScreen() {
 					tabBarIndicatorStyle: styles.tabIndicator,
 					tabBarActiveTintColor: Colors.neutral[50],
 					tabBarInactiveTintColor: Colors.neutral[400],
+					tabBarItemStyle: { padding: 0 },
+					tabBarContentContainerStyle: { padding: 0 },
 					sceneStyle: {
 						backgroundColor: Colors.neutral[950],
 					},
@@ -132,16 +131,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: Colors.neutral[950],
 	},
-	header: {
-		padding: 16,
-		paddingTop: 48,
-		paddingBottom: 8,
-	},
-	title: {
-		fontFamily: 'Inter-Bold',
-		fontSize: 28,
-		color: Colors.neutral[50],
-	},
 	tabBar: {
 		backgroundColor: Colors.neutral[950],
 		borderBottomWidth: 1,
@@ -151,7 +140,7 @@ const styles = StyleSheet.create({
 	},
 	tabLabel: {
 		fontFamily: 'Inter-Medium',
-		fontSize: 16,
+		fontSize: 14,
 		textTransform: 'none',
 	},
 	tabIndicator: {

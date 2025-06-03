@@ -21,8 +21,8 @@ export default function DiscoverScreen() {
 	if (error) {
 		return (
 			<View style={styles.errorContainer}>
-				<Text style={styles.errorText}>Oops! Something went wrong.</Text>
-				<Text style={styles.errorSubtext}>{error}</Text>
+				<Text style={styles.errorText}>Something went wrong</Text>
+				<Text style={styles.errorSubtext}>Please try again later</Text>
 			</View>
 		);
 	}
@@ -34,13 +34,6 @@ export default function DiscoverScreen() {
 				contentContainerStyle={styles.scrollContent}
 				showsVerticalScrollIndicator={false}
 			>
-				<View style={styles.header}>
-					<Text style={styles.title}>ScreenDiary</Text>
-					<Text style={styles.subtitle}>
-						Discover and track your entertainment
-					</Text>
-				</View>
-
 				<SearchBar
 					value={searchQuery}
 					onChangeText={setSearchQuery}
@@ -112,22 +105,8 @@ const styles = StyleSheet.create({
 	},
 	scrollContent: {
 		padding: 16,
-		paddingTop: 48,
+		paddingTop: 16,
 		paddingBottom: 32,
-	},
-	header: {
-		marginBottom: 24,
-	},
-	title: {
-		fontFamily: 'Inter-Bold',
-		fontSize: 28,
-		color: Colors.neutral[50],
-		marginBottom: 4,
-	},
-	subtitle: {
-		fontFamily: 'Inter-Regular',
-		fontSize: 16,
-		color: Colors.neutral[400],
 	},
 	section: {
 		marginBottom: 24,

@@ -1,54 +1,76 @@
 import Colors from '@/constants/Colors';
 import { Tabs } from 'expo-router';
 import { LibraryBig, Tv, User, Users } from 'lucide-react-native';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
 	return (
-		<Tabs
-			screenOptions={{
-				tabBarActiveTintColor: Colors.primary[500],
-				tabBarInactiveTintColor: Colors.neutral[400],
-				tabBarStyle: styles.tabBar,
-				tabBarLabelStyle: styles.tabBarLabel,
-				headerShown: false,
-			}}
-		>
-			<Tabs.Screen
-				name='index'
-				options={{
-					title: 'Discover',
-					tabBarIcon: ({ size, color }) => <Tv size={size} color={color} />,
+		<View style={styles.container}>
+			<Tabs
+				screenOptions={{
+					tabBarActiveTintColor: Colors.primary[500],
+					tabBarInactiveTintColor: Colors.neutral[400],
+					tabBarStyle: styles.tabBar,
+					tabBarLabelStyle: styles.tabBarLabel,
+					headerStyle: {
+						backgroundColor: Colors.neutral[950],
+						borderBottomWidth: 1,
+						borderBottomColor: Colors.neutral[800],
+						height: Platform.OS === 'ios' ? 100 : 80,
+					},
+					headerTitleContainerStyle: {
+						paddingHorizontal: 16,
+						paddingBottom: 16,
+					},
+					headerTitleStyle: {
+						fontFamily: 'Inter-Bold',
+						fontSize: 28,
+						color: Colors.neutral[50],
+					},
 				}}
-			/>
-			<Tabs.Screen
-				name='library'
-				options={{
-					title: 'Library',
-					tabBarIcon: ({ size, color }) => (
-						<LibraryBig size={size} color={color} />
-					),
-				}}
-			/>
-			<Tabs.Screen
-				name='social'
-				options={{
-					title: 'Social',
-					tabBarIcon: ({ size, color }) => <Users size={size} color={color} />,
-				}}
-			/>
-			<Tabs.Screen
-				name='profile'
-				options={{
-					title: 'Profile',
-					tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
-				}}
-			/>
-		</Tabs>
+			>
+				<Tabs.Screen
+					name='index'
+					options={{
+						title: 'Discover',
+						tabBarIcon: ({ size, color }) => <Tv size={size} color={color} />,
+					}}
+				/>
+				<Tabs.Screen
+					name='library'
+					options={{
+						title: 'Library',
+						tabBarIcon: ({ size, color }) => (
+							<LibraryBig size={size} color={color} />
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name='social'
+					options={{
+						title: 'Social',
+						tabBarIcon: ({ size, color }) => (
+							<Users size={size} color={color} />
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name='profile'
+					options={{
+						title: 'Profile',
+						tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+					}}
+				/>
+			</Tabs>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: Colors.neutral[950],
+	},
 	tabBar: {
 		backgroundColor: Colors.neutral[900],
 		borderTopWidth: 0,

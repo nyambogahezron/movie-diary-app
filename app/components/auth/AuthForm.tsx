@@ -77,52 +77,54 @@ export default function AuthForm({ mode }: AuthFormProps) {
 			</Text>
 
 			{error && (
-				<View className='bg-red-900/60 text-white p-3 rounded mb-4'>
+				<View className='bg-red-900/60 p-3 rounded mb-4'>
 					<Text className='text-white'>{error}</Text>
 				</View>
 			)}
 
 			<View>
 				<View className='mb-4'>
-					<View className='relative flex items-start justify-between'>
+					<Text className='relative'>
 						<TextInput
-							id='email'
 							value={email}
 							onChangeText={setEmail}
 							placeholder='Email'
-							placeholderTextColor={'#9ca3af'}
+							placeholderTextColor='#9ca3af'
 							onFocus={() => setError('')}
 							autoCapitalize='none'
 							autoComplete='email'
 							autoCorrect={false}
 							keyboardType='email-address'
 							style={{ fontFamily: 'Inter-Regular' }}
-							className='w-full bg-gray-700 text-white px-4 py-3 p-10 rounded focus:outline-none  '
+							className='w-full bg-gray-700 text-white px-4 py-3 rounded'
 						/>
-					</View>
+					</Text>
 				</View>
 
 				<View className='mb-6'>
 					<View className='relative'>
 						<TextInput
 							secureTextEntry={!showPassword}
-							id='password'
 							value={password}
 							onChangeText={setPassword}
-							placeholderTextColor={'#9ca3af'}
+							placeholderTextColor='#9ca3af'
 							onFocus={() => setError('')}
 							autoCapitalize='none'
 							autoComplete='password'
 							autoCorrect={false}
 							style={{ fontFamily: 'Inter-Regular' }}
 							placeholder='Password'
-							className='w-full bg-gray-700 text-white px-4 py-3 p-10 rounded focus:outline-none '
+							className='w-full bg-gray-700 text-white px-4 py-3 rounded'
 						/>
 						<TouchableOpacity
 							onPress={() => setShowPassword(!showPassword)}
-							className='absolute right-3 top-1/2 transform -translate-y-[10px] text-gray-400'
+							className='absolute right-3 top-1/2 -translate-y-1/2'
 						>
-							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							{showPassword ? (
+								<EyeOff size={20} color='#9ca3af' />
+							) : (
+								<Eye size={20} color='#9ca3af' />
+							)}
 						</TouchableOpacity>
 					</View>
 				</View>
@@ -130,8 +132,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
 				<Pressable
 					onPress={handleSubmit}
 					disabled={isLoading}
-					className={`w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded transition-colors ${
-						isLoading ? 'opacity-70 cursor-not-allowed' : ''
+					className={`w-full bg-red-600 py-3 rounded ${
+						isLoading ? 'opacity-70' : ''
 					}`}
 				>
 					<View className='flex items-center justify-center'>
@@ -146,7 +148,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 				</Pressable>
 			</View>
 
-			<View className='mt-6 text-gray-400 text-sm'>
+			<View className='mt-6'>
 				{mode === 'login' ? (
 					<View className='flex-row'>
 						<Text className='text-gray-400'>New to Movie Diary? </Text>

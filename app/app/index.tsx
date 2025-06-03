@@ -8,6 +8,7 @@ import {
 	TouchableOpacity,
 	View,
 } from 'react-native';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import Onboarding from '../components/onboarding';
 
 const { width } = Dimensions.get('window');
@@ -27,27 +28,47 @@ export default function Index() {
 		<View style={styles.container}>
 			<View style={{ alignItems: 'center' }}>
 				<Film size={100} color='#8B5CF6' style={styles.icon} />
-				<Text style={styles.title}>Welcome to MovieDiary</Text>
-				<Text style={styles.subtitle}>
+				<Animated.Text
+					entering={FadeInDown.duration(500)}
+					exiting={FadeOutUp.duration(500)}
+					style={styles.title}
+				>
+					Welcome to MovieDiary
+				</Animated.Text>
+				<Animated.Text
+					entering={FadeInDown.duration(500).delay(200)}
+					exiting={FadeOutUp.duration(500).delay(200)}
+					style={styles.subtitle}
+				>
 					Your personal movie journey begins here.
-				</Text>
+				</Animated.Text>
 			</View>
 			<View>
-				<TouchableOpacity
-					style={styles.button}
-					activeOpacity={0.8}
-					onPress={() => router.push('/(auth)/register')}
+				<Animated.View
+					entering={FadeInDown.duration(500).delay(400)}
+					exiting={FadeOutUp.duration(500).delay(400)}
 				>
-					<Text style={styles.buttonText}>Register</Text>
-				</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.button}
+						activeOpacity={0.8}
+						onPress={() => router.push('/(auth)/register')}
+					>
+						<Text style={styles.buttonText}>Register</Text>
+					</TouchableOpacity>
+				</Animated.View>
 
-				<TouchableOpacity
-					style={[styles.button, { marginTop: 16 }]}
-					onPress={() => router.push('/login')}
-					activeOpacity={0.8}
+				<Animated.View
+					entering={FadeInDown.duration(500).delay(500)}
+					exiting={FadeOutUp.duration(500).delay(500)}
 				>
-					<Text style={styles.buttonText}>Login</Text>
-				</TouchableOpacity>
+					<TouchableOpacity
+						style={[styles.button, { marginTop: 16 }]}
+						onPress={() => router.push('/login')}
+						activeOpacity={0.8}
+					>
+						<Text style={styles.buttonText}>Login</Text>
+					</TouchableOpacity>
+				</Animated.View>
 			</View>
 		</View>
 	);

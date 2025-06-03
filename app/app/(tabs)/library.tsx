@@ -4,7 +4,7 @@ import MediaListItem from '@/components/MediaListItem';
 import Colors from '@/constants/Colors';
 import { useLibrary } from '@/hooks/useLibrary';
 import { Media } from '@/types/Media';
-import { BookOpenCheck, Film, ListFilter, Tv } from 'lucide-react-native';
+import { BookOpenCheck, Film, Tv } from 'lucide-react-native';
 import { ReactElement, useMemo, useState } from 'react';
 import {
 	ScrollView,
@@ -42,8 +42,8 @@ export default function LibraryScreen() {
 			{icon}
 			<Text
 				style={[
-					styles.filterText,
-					activeFilter === type && styles.filterTextActive,
+					styles.filterButtonText,
+					activeFilter === type && styles.filterButtonTextActive,
 				]}
 			>
 				{label}
@@ -60,7 +60,10 @@ export default function LibraryScreen() {
 			onPress={() => setActiveSort(type)}
 		>
 			<Text
-				style={[styles.sortText, activeSort === type && styles.sortTextActive]}
+				style={[
+					styles.sortButtonText,
+					activeSort === type && styles.sortButtonTextActive,
+				]}
 			>
 				{label}
 			</Text>
@@ -141,16 +144,6 @@ export default function LibraryScreen() {
 				contentContainerStyle={styles.scrollContent}
 				showsVerticalScrollIndicator={false}
 			>
-				<View style={styles.header}>
-					<Text style={styles.title}>Your Library</Text>
-					<TouchableOpacity
-						style={styles.filterIcon}
-						onPress={() => setIsFilterModalVisible(true)}
-					>
-						<ListFilter size={20} color={Colors.neutral[300]} />
-					</TouchableOpacity>
-				</View>
-
 				<View style={styles.filtersContainer}>
 					<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 						{renderFilterButton(
@@ -304,22 +297,8 @@ const styles = StyleSheet.create({
 	},
 	scrollContent: {
 		padding: 16,
-		paddingTop: 48,
+		paddingTop: 16,
 		paddingBottom: 32,
-	},
-	header: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: 16,
-	},
-	title: {
-		fontFamily: 'Inter-Bold',
-		fontSize: 28,
-		color: Colors.neutral[50],
-	},
-	filterIcon: {
-		padding: 8,
 	},
 	filtersContainer: {
 		marginBottom: 16,
@@ -329,20 +308,20 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		paddingHorizontal: 16,
 		paddingVertical: 8,
-		backgroundColor: Colors.neutral[900],
 		borderRadius: 20,
 		marginRight: 8,
+		backgroundColor: Colors.neutral[900],
 	},
 	filterButtonActive: {
 		backgroundColor: Colors.primary[900],
 	},
-	filterText: {
+	filterButtonText: {
 		fontFamily: 'Inter-Medium',
 		fontSize: 14,
 		color: Colors.neutral[400],
-		marginLeft: 8,
+		marginLeft: 6,
 	},
-	filterTextActive: {
+	filterButtonTextActive: {
 		color: Colors.primary[500],
 	},
 	sortContainer: {
@@ -351,7 +330,7 @@ const styles = StyleSheet.create({
 		marginBottom: 24,
 	},
 	sortLabel: {
-		fontFamily: 'Inter-Regular',
+		fontFamily: 'Inter-Medium',
 		fontSize: 14,
 		color: Colors.neutral[400],
 		marginRight: 12,
@@ -363,19 +342,19 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		paddingVertical: 6,
 		borderRadius: 16,
-		backgroundColor: 'transparent',
 		marginRight: 8,
+		backgroundColor: Colors.neutral[900],
 	},
 	sortButtonActive: {
-		backgroundColor: Colors.neutral[800],
+		backgroundColor: Colors.primary[900],
 	},
-	sortText: {
+	sortButtonText: {
 		fontFamily: 'Inter-Medium',
-		fontSize: 13,
+		fontSize: 14,
 		color: Colors.neutral[400],
 	},
-	sortTextActive: {
-		color: Colors.neutral[100],
+	sortButtonTextActive: {
+		color: Colors.primary[500],
 	},
 	section: {
 		marginBottom: 24,

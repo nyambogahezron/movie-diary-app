@@ -20,13 +20,16 @@ import {
 	Star,
 	Tv,
 } from 'lucide-react-native';
+import { useRef, useState } from 'react';
 import {
+	Animated,
 	FlatList,
 	ScrollView,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
+	useWindowDimensions,
 } from 'react-native';
 
 const Tab = createMaterialTopTabNavigator();
@@ -173,6 +176,7 @@ const ActivityTab = () => {
 
 	return activities.length > 0 ? (
 		<FlatList
+			scrollEnabled={false}
 			data={activities}
 			renderItem={renderActivityItem}
 			keyExtractor={(item) => item.id}
@@ -235,10 +239,36 @@ const ListsTab = () => {
 };
 
 export default function ProfileScreen() {
-	const { user, stats, isLoading } = useProfile();
+	const { user, stats, isLoading } = useProfile() as {
+		user: User | null;
+		stats: Stats | null;
+		isLoading: boolean;
+	};
+	const scrollY = useRef(new Animated.Value(0)).current;
+	const { height: windowHeight } = useWindowDimensions();
+	const [activeTab, setActiveTab] = useState(0);
 
-	return (
-		<View style={styles.container}>
+	// Animation values
+	const headerHeight = scrollY.interpolate({
+		inputRange: [0, 100],
+		outputRange: [1, 0.7],
+		extrapolate: 'clamp',
+	});
+
+	const headerOpacity = scrollY.interpolate({
+		inputRange: [0, 100],
+		outputRange: [1, 0.9],
+		extrapolate: 'clamp',
+	});
+
+	const headerTranslateY = scrollY.interpolate({
+		inputRange: [0, 100],
+		outputRange: [0, -20],
+		extrapolate: 'clamp',
+	});
+
+	const renderHeader = () => (
+		<>
 			<View style={styles.header}>
 				<Text style={styles.title}>Profile</Text>
 				<TouchableOpacity style={styles.settingsButton}>
@@ -246,8 +276,19 @@ export default function ProfileScreen() {
 				</TouchableOpacity>
 			</View>
 
-			<View style={styles.profileHeader}>
-				<UserAvatar user={user as User} size={80} />
+			<Animated.View
+				style={[
+					styles.profileHeader,
+					{
+						transform: [
+							{ scale: headerHeight },
+							{ translateY: headerTranslateY },
+						],
+						opacity: headerOpacity,
+					},
+				]}
+			>
+				<UserAvatar user={user as unknown as User} size={80} />
 				<View style={styles.profileInfo}>
 					<Text style={styles.profileName}>{user?.name}</Text>
 					<Text style={styles.profileUsername}>@{user?.username}</Text>
@@ -270,31 +311,80 @@ export default function ProfileScreen() {
 						</View>
 					</View>
 				</View>
-			</View>
+			</Animated.View>
+		</>
+	);
 
-			<Tab.Navigator
-				screenOptions={{
-					tabBarStyle: styles.tabBar,
-					tabBarLabelStyle: styles.tabLabel,
-					tabBarIndicatorStyle: styles.tabIndicator,
-					tabBarActiveTintColor: Colors.neutral[50],
-					tabBarInactiveTintColor: Colors.neutral[400],
-					tabBarPressColor: Colors.neutral[800],
-					sceneStyle: {
-						backgroundColor: Colors.neutral[950],
-					},
-				}}
+	const renderTabContent = () => {
+		const currentStats = stats as unknown as Stats;
+		switch (activeTab) {
+			case 0:
+				return <StatisticsTab stats={currentStats} />;
+			case 1:
+				return <ActivityTab />;
+			case 2:
+				return <ListsTab />;
+			default:
+				return null;
+		}
+	};
+
+	return (
+		<View style={styles.container}>
+			<Animated.ScrollView
+				style={styles.scrollView}
+				contentContainerStyle={styles.scrollViewContent}
+				showsVerticalScrollIndicator={false}
+				onScroll={Animated.event(
+					[{ nativeEvent: { contentOffset: { y: scrollY } } }],
+					{ useNativeDriver: true }
+				)}
+				scrollEventThrottle={16}
+				stickyHeaderIndices={[2]} // Make the tab bar sticky
 			>
-				<Tab.Screen name='Statistics' options={{ tabBarLabel: 'Statistics' }}>
-					{() => <StatisticsTab stats={stats as Stats} />}
-				</Tab.Screen>
-				<Tab.Screen name='Activity' options={{ tabBarLabel: 'Activity' }}>
-					{() => <ActivityTab />}
-				</Tab.Screen>
-				<Tab.Screen name='Lists' options={{ tabBarLabel: 'Lists' }}>
-					{() => <ListsTab />}
-				</Tab.Screen>
-			</Tab.Navigator>
+				{renderHeader()}
+				<View style={[styles.tabContainer, { minHeight: windowHeight - 200 }]}>
+					<Tab.Navigator
+						screenOptions={{
+							tabBarLabelStyle: styles.tabLabel,
+							tabBarIndicatorStyle: styles.tabIndicator,
+							tabBarActiveTintColor: Colors.neutral[50],
+							tabBarInactiveTintColor: Colors.neutral[400],
+							tabBarPressColor: Colors.neutral[800],
+							tabBarItemStyle: { padding: 0 },
+							tabBarContentContainerStyle: { padding: 0 },
+							sceneStyle: {
+								backgroundColor: Colors.neutral[950],
+							},
+							tabBarStyle: {
+								backgroundColor: Colors.neutral[950],
+								borderBottomWidth: 1,
+								borderBottomColor: Colors.neutral[800],
+								elevation: 0,
+								shadowOpacity: 0,
+							},
+						}}
+						screenListeners={{
+							state: (e) => {
+								setActiveTab(e.data.state.index);
+							},
+						}}
+					>
+						<Tab.Screen
+							name='Statistics'
+							options={{ tabBarLabel: 'Statistics' }}
+						>
+							{() => <StatisticsTab stats={stats as unknown as Stats} />}
+						</Tab.Screen>
+						<Tab.Screen name='Activity' options={{ tabBarLabel: 'Activity' }}>
+							{() => <ActivityTab />}
+						</Tab.Screen>
+						<Tab.Screen name='Lists' options={{ tabBarLabel: 'Lists' }}>
+							{() => <ListsTab />}
+						</Tab.Screen>
+					</Tab.Navigator>
+				</View>
+			</Animated.ScrollView>
 		</View>
 	);
 }
@@ -519,5 +609,14 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		fontSize: 14,
 		color: Colors.neutral[500],
+	},
+	scrollView: {
+		flex: 1,
+	},
+	scrollViewContent: {
+		flexGrow: 1,
+	},
+	tabContainer: {
+		flex: 1,
 	},
 });
