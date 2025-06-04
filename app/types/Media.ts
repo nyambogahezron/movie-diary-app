@@ -14,4 +14,8 @@ export type Media = {
 		current: number;
 		total: number;
 	};
+	dateWatched?: string;
+	status?: 'Currently Watching' | 'Completed' | 'Planning to Watch' | 'Paused';
+	rewatches?: number;
+	favorite?: boolean;
 };
