@@ -31,7 +31,7 @@ const GENRE_COLORS = [
 	Colors.error[500],
 ];
 
-export default function StatisticsTab() {
+export default function StatsScreen() {
 	const { watchedContent, inProgressContent } = useLibrary();
 
 	// Calculate total watch time (assuming average movie is 2h and TV episode is 45min)

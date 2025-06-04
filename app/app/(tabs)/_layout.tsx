@@ -1,6 +1,6 @@
 import Colors from '@/constants/Colors';
 import { Tabs } from 'expo-router';
-import { LibraryBig, Tv, User, Users } from 'lucide-react-native';
+import { BarChart3, LibraryBig, Tv, User, Users } from 'lucide-react-native';
 import { Platform, StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
@@ -34,6 +34,15 @@ export default function TabLayout() {
 					options={{
 						title: 'Discover',
 						tabBarIcon: ({ size, color }) => <Tv size={size} color={color} />,
+					}}
+				/>
+				<Tabs.Screen
+					name='dashboard'
+					options={{
+						title: 'Dashboard',
+						tabBarIcon: ({ size, color }) => (
+							<BarChart3 size={size} color={color} />
+						),
 					}}
 				/>
 				<Tabs.Screen
@@ -78,6 +87,7 @@ const styles = StyleSheet.create({
 		paddingTop: 10,
 		paddingBottom: 50,
 		height: 105,
+		elevation: 0,
 	},
 	tabBarLabel: {
 		fontFamily: 'Inter-Medium',
