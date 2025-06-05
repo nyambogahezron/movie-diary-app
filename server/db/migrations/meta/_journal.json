@@ -1,12 +1,11 @@
 {
-  "version": "7",
-  "dialect": "sqlite",
+  "version": "5",
   "entries": [
     {
       "idx": 0,
       "version": "6",
-      "when": 1748792043089,
-      "tag": "0000_awesome_freak",
+      "when": 1749113364247,
+      "tag": "0000_damp_dakota_north",
       "breakpoints": true
     }
   ]

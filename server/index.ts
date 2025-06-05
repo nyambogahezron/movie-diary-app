@@ -65,27 +65,26 @@ app.use(
 );
 
 // Middleware
+app.use(errorHandler);
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser(config.security.cookieSecret));
 app.use(analyticsMiddleware);
 
 // CSRF token endpoint
-app.get('/api/csrf-token', generateCsrfToken);
+app.get('/api/v1/csrf-token', generateCsrfToken);
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/movies', movieRoutes);
-app.use('/api/watchlists', watchlistRoutes);
-app.use('/api/favorites', favoriteRoutes);
-app.use('/api/reviews', movieReviewRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/analytics', analyticsRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/movies', movieRoutes);
+app.use('/api/v1/watchlists', watchlistRoutes);
+app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/reviews', movieReviewRoutes);
+app.use('/api/v1/posts', postRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 app.get('/', (_req, res) => {
 	res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
-
-app.use(errorHandler);
 
 app.listen(PORT, () => {
 	console.log(

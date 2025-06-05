@@ -6,28 +6,18 @@ import { User as UserType } from '../types';
 
 export class User {
 	static async create(userData: {
+		name: string;
 		username: string;
 		email: string;
 		password: string;
 		avatar?: string;
 	}): Promise<UserType> {
-		if (!userData.username || userData.username.length < 3) {
-			throw new Error('Username must be at least 3 characters long');
-		}
-
-		if (!userData.email) {
-			throw new Error('Email is required');
-		}
-
-		if (!userData.password || userData.password.length < 6) {
-			throw new Error('Password must be at least 6 characters long');
-		}
-
 		const hashedPassword = await bcrypt.hash(userData.password, 10);
 
 		const result = await db
 			.insert(users)
 			.values({
+				name: userData.name,
 				username: userData.username,
 				email: userData.email.toLowerCase(),
 				password: hashedPassword,

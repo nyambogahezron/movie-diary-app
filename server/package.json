@@ -10,9 +10,9 @@
 		"start": "ts-node index.ts",
 		"dev": "nodemon --exec ts-node index.ts",
 		"build": "tsc",
-		"migrate": "ts-node db/migrate.ts",
+		"migrations": "ts-node scripts/run-migrations.ts",
 		"setup": "bun install && bun run migrations",
-		"migrations": "bun drizzle-kit generate && bun drizzle-kit migrate"
+		"migrations:refresh": "rm db/database.sqlite3 && ts-node scripts/run-migrations.ts"
 	},
 	"author": "Hezron Nyamboga",
 	"license": "ISC",

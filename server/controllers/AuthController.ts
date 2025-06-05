@@ -5,16 +5,21 @@ import AsyncHandler from '../middleware/asyncHandler';
 export class AuthController {
 	static register = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
-			const { username, email, password } = req.body;
+			const { name, username, email, password } = req.body;
 
-			if (!username || !email || !password) {
+			if (!name || !username || !email || !password) {
 				res
 					.status(400)
 					.json({ error: 'Username, email, and password are required' });
 				return;
 			}
 
-			const authPayload = await AuthService.register(username, email, password);
+			const authPayload = await AuthService.register(
+				name,
+				username,
+				email,
+				password
+			);
 
 			if (authPayload.refreshToken) {
 				res.cookie('refreshToken', authPayload.refreshToken, {
@@ -31,6 +36,7 @@ export class AuthController {
 					token: authPayload.token,
 					user: {
 						id: authPayload.user.id,
+						name: authPayload.user.name,
 						username: authPayload.user.username,
 						email: authPayload.user.email,
 						avatar: authPayload.user.avatar,

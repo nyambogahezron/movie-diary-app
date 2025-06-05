@@ -1,13 +1,15 @@
 import { body } from 'express-validator';
 
-/**
- * Validation rules for authentication endpoints
- */
 export const authValidation = {
-	/**
-	 * Rules for user registration
-	 */
 	register: [
+		body('name')
+			.notEmpty()
+			.withMessage('Name is required')
+			.isLength({ min: 2, max: 50 })
+			.withMessage('Name must be between 2 and 50 characters')
+			.matches(/^[a-zA-Z\s]+$/)
+			.withMessage('Name can only contain letters and spaces')
+			.trim(),
 		body('username')
 			.notEmpty()
 			.withMessage('Username is required')
@@ -37,9 +39,6 @@ export const authValidation = {
 			.withMessage('Password must contain at least one number'),
 	],
 
-	/**
-	 * Rules for user login
-	 */
 	login: [
 		body('email')
 			.notEmpty()
@@ -51,9 +50,6 @@ export const authValidation = {
 		body('password').notEmpty().withMessage('Password is required'),
 	],
 
-	/**
-	 * Rules for refresh token
-	 */
 	refreshToken: [
 		// No body validation needed as we use HTTP-only cookie
 	],

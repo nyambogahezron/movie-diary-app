@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "81dbb8e4-fff7-4dea-865c-0c20e6010167",
+  "id": "a3fdf49e-dc9b-4dd2-8db2-5933e89f0676",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "endpoint_analytics": {
@@ -814,6 +814,13 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "username": {
           "name": "username",

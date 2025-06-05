@@ -4,10 +4,8 @@ import { AuthPayload, JwtPayload, User as UserType } from '../types';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 
-// Initialize environment variables
 dotenv.config();
 
-// Define a custom error for authentication issues
 export class AuthenticationError extends Error {
 	constructor(message: string) {
 		super(message);
@@ -20,49 +18,43 @@ export class AuthService {
 		process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 	private static readonly JWT_REFRESH_SECRET =
 		process.env.JWT_REFRESH_SECRET || crypto.randomBytes(32).toString('hex');
-	private static readonly ACCESS_TOKEN_EXPIRY = '15m'; // Shorter lifespan for access tokens
-	private static readonly REFRESH_TOKEN_EXPIRY = '7d'; // Longer lifespan for refresh tokens
+	private static readonly ACCESS_TOKEN_EXPIRY = '15m';
+	private static readonly REFRESH_TOKEN_EXPIRY = '7d';
 
 	static async register(
+		name: string,
 		username: string,
 		email: string,
 		password: string
 	): Promise<AuthPayload> {
-		// Check if user already exists with this email
 		const existingUserByEmail = await User.findByEmail(email);
 		if (existingUserByEmail) {
 			throw new AuthenticationError('Email is already registered');
 		}
 
-		// Check if user already exists with this username
 		const existingUserByUsername = await User.findByUsername(username);
 		if (existingUserByUsername) {
 			throw new AuthenticationError('Username is already taken');
 		}
 
-		// Create new user
-		const user = await User.create({ username, email, password });
+		const user = await User.create({ name, username, email, password });
 
-		// Generate tokens
 		const { accessToken, refreshToken } = this.generateTokens(user);
 
 		return { token: accessToken, refreshToken, user };
 	}
 
 	static async login(email: string, password: string): Promise<AuthPayload> {
-		// Find user by email
 		const user = await User.findByEmail(email);
 		if (!user) {
 			throw new AuthenticationError('Invalid credentials');
 		}
 
-		// Verify password
 		const isPasswordValid = await User.comparePassword(user.password, password);
 		if (!isPasswordValid) {
 			throw new AuthenticationError('Invalid credentials');
 		}
 
-		// Generate tokens
 		const { accessToken, refreshToken } = this.generateTokens(user);
 
 		return { token: accessToken, refreshToken, user };
