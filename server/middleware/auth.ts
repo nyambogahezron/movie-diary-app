@@ -16,27 +16,16 @@ export const authMiddleware = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const authHeader = req.headers.authorization;
+		const accessToken = req.cookies.accessToken;
 
-		if (!authHeader) {
+		if (!accessToken) {
 			res.status(401).json({ error: 'No authentication token provided' });
 			return;
 		}
 
-		const parts = authHeader.split(' ');
-
-		if (parts.length !== 2 || parts[0] !== 'Bearer') {
-			res.status(401).json({ error: 'Invalid authentication token format' });
-			return;
-		}
-
-		const token = parts[1];
-
 		try {
-			const user = await AuthService.verifyToken(token);
-
+			const user = await AuthService.verifyToken(accessToken);
 			req.user = user;
-
 			next();
 		} catch (error: any) {
 			if (error.message === 'Token expired') {
@@ -62,20 +51,13 @@ export const optionalAuthMiddleware = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-		const authHeader = req.headers.authorization;
+		const accessToken = req.cookies.accessToken;
 
-		if (authHeader) {
-			const parts = authHeader.split(' ');
-
-			if (parts.length === 2 && parts[0] === 'Bearer') {
-				const token = parts[1];
-
-				try {
-					const user = await AuthService.verifyToken(token);
-
-					req.user = user;
-				} catch (error) {}
-			}
+		if (accessToken) {
+			try {
+				const user = await AuthService.verifyToken(accessToken);
+				req.user = user;
+			} catch (error) {}
 		}
 
 		next();

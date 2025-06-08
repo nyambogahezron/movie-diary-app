@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import AsyncHandler from '../middleware/asyncHandler';
+import { BadRequestError } from '@/errors';
 
 export class AuthController {
 	static register = AsyncHandler(
@@ -21,6 +22,15 @@ export class AuthController {
 				password
 			);
 
+			// Set access token cookie
+			res.cookie('accessToken', authPayload.token, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production',
+				sameSite: 'strict',
+				maxAge: 15 * 60 * 1000, // 15 minutes
+			});
+
+			// Set refresh token cookie
 			if (authPayload.refreshToken) {
 				res.cookie('refreshToken', authPayload.refreshToken, {
 					httpOnly: true,
@@ -33,7 +43,6 @@ export class AuthController {
 			res.status(201).json({
 				message: 'User registered successfully',
 				data: {
-					token: authPayload.token,
 					user: {
 						id: authPayload.user.id,
 						name: authPayload.user.name,
@@ -49,15 +58,25 @@ export class AuthController {
 
 	static login = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
-			const { email, password } = req.body;
+			const { username, email, password } = req.body;
 
-			if (!email || !password) {
-				res.status(400).json({ error: 'Email and password are required' });
-				return;
+			const loginIdentifier = username || email;
+
+			if (!loginIdentifier || !password) {
+				throw new BadRequestError('Invalid Credentials ');
 			}
 
-			const authPayload = await AuthService.login(email, password);
+			const authPayload = await AuthService.login(loginIdentifier, password);
 
+			// Set access token cookie
+			res.cookie('accessToken', authPayload.token, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production',
+				sameSite: 'strict',
+				maxAge: 15 * 60 * 1000, // 15 minutes
+			});
+
+			// Set refresh token cookie
 			if (authPayload.refreshToken) {
 				res.cookie('refreshToken', authPayload.refreshToken, {
 					httpOnly: true,
@@ -70,7 +89,6 @@ export class AuthController {
 			res.status(200).json({
 				message: 'Login successful',
 				data: {
-					token: authPayload.token,
 					user: {
 						id: authPayload.user.id,
 						username: authPayload.user.username,
@@ -118,11 +136,16 @@ export class AuthController {
 				refreshToken
 			);
 
+			// Set new access token cookie
+			res.cookie('accessToken', accessToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production',
+				sameSite: 'strict',
+				maxAge: 15 * 60 * 1000, // 15 minutes
+			});
+
 			res.status(200).json({
 				message: 'Token refreshed successfully',
-				data: {
-					token: accessToken,
-				},
 			});
 		}
 	);

@@ -23,12 +23,14 @@ describe('AuthService', () => {
 	describe('register', () => {
 		it('should register a new user and return authentication payload', async () => {
 			const userData = {
+				name: 'Test User',
 				username: 'testuser',
 				email: 'test@example.com',
 				password: 'Password123!',
 			};
 
 			const result = await AuthService.register(
+				userData.name,
 				userData.username,
 				userData.email,
 				userData.password
@@ -60,6 +62,7 @@ describe('AuthService', () => {
 		it('should throw error if username already exists', async () => {
 			// Create a user first
 			const existingUser = {
+				name: 'Existing User',
 				username: 'existinguser',
 				email: 'unique@example.com',
 				password: await bcrypt.hash('password', 10),
@@ -69,6 +72,7 @@ describe('AuthService', () => {
 
 			// Try to register with same username
 			const userData = {
+				name: 'Test User',
 				username: 'existinguser',
 				email: 'different@example.com',
 				password: 'Password123!',
@@ -76,6 +80,7 @@ describe('AuthService', () => {
 
 			await expect(
 				AuthService.register(
+					userData.name,
 					userData.username,
 					userData.email,
 					userData.password
@@ -86,6 +91,7 @@ describe('AuthService', () => {
 		it('should throw error if email already exists', async () => {
 			// Create a user first
 			const existingUser = {
+				name: 'Unique User',
 				username: 'uniqueuser',
 				email: 'existing@example.com',
 				password: await bcrypt.hash('password', 10),
@@ -95,6 +101,7 @@ describe('AuthService', () => {
 
 			// Try to register with same email
 			const userData = {
+				name: 'Test User',
 				username: 'differentuser',
 				email: 'existing@example.com',
 				password: 'Password123!',
@@ -102,6 +109,7 @@ describe('AuthService', () => {
 
 			await expect(
 				AuthService.register(
+					userData.name,
 					userData.username,
 					userData.email,
 					userData.password
@@ -114,6 +122,7 @@ describe('AuthService', () => {
 		beforeEach(async () => {
 			// Create a test user for login tests
 			await db.insert(schema.users).values({
+				name: 'Login User',
 				username: 'loginuser',
 				email: 'login@example.com',
 				password: await bcrypt.hash('correctpassword', 10),
@@ -153,6 +162,7 @@ describe('AuthService', () => {
 			const result = await db
 				.insert(schema.users)
 				.values({
+					name: 'Get By ID User',
 					username: 'getbyiduser',
 					email: 'getbyid@example.com',
 					password: await bcrypt.hash('password', 10),

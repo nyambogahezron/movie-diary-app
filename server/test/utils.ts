@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 // Create a test user and return authentication token
 export async function createTestUser(userData = {}) {
 	const defaultUserData = {
+		name: 'Test User',
 		username: 'testuser',
 		email: 'test@example.com',
 		password: await bcrypt.hash('password123', 10),

@@ -1,17 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { authMiddleware } from '../../middleware/auth';
-import { db } from '../../db/test-db';
-import * as schema from '../../db/schema';
+import { authMiddleware, optionalAuthMiddleware } from '../../middleware/auth';
 import { createTestUser } from '../utils';
-
-// Mock Express objects
-const mockResponse = () => {
-	const res = {} as Response;
-	res.status = jest.fn().mockReturnValue(res);
-	res.json = jest.fn().mockReturnValue(res);
-	return res;
-};
+import { mockResponse } from '../test-utils';
 
 describe('Authentication Middleware', () => {
 	let userId: number;
@@ -39,8 +29,8 @@ describe('Authentication Middleware', () => {
 
 	it('should call next() when valid token is provided', async () => {
 		mockReq = {
-			headers: {
-				authorization: `Bearer ${validToken}`,
+			cookies: {
+				accessToken: validToken,
 			},
 		};
 
@@ -52,7 +42,7 @@ describe('Authentication Middleware', () => {
 
 	it('should return 401 when no token is provided', async () => {
 		mockReq = {
-			headers: {},
+			cookies: {},
 		};
 
 		await authMiddleware(mockReq as Request, mockRes, mockNext);
@@ -64,26 +54,10 @@ describe('Authentication Middleware', () => {
 		expect(mockNext).not.toHaveBeenCalled();
 	});
 
-	it('should return 401 when token format is invalid', async () => {
-		mockReq = {
-			headers: {
-				authorization: 'InvalidTokenFormat',
-			},
-		};
-
-		await authMiddleware(mockReq as Request, mockRes, mockNext);
-
-		expect(mockRes.status).toHaveBeenCalledWith(401);
-		expect(mockRes.json).toHaveBeenCalledWith({
-			error: 'Invalid authentication token format',
-		});
-		expect(mockNext).not.toHaveBeenCalled();
-	});
-
 	it('should return 401 when token is invalid', async () => {
 		mockReq = {
-			headers: {
-				authorization: 'Bearer invalidtoken',
+			cookies: {
+				accessToken: 'invalidtoken',
 			},
 		};
 
@@ -92,5 +66,44 @@ describe('Authentication Middleware', () => {
 		expect(mockRes.status).toHaveBeenCalledWith(401);
 		expect(mockRes.json).toHaveProperty('error');
 		expect(mockNext).not.toHaveBeenCalled();
+	});
+
+	describe('Optional Auth Middleware', () => {
+		it('should set user when valid token is provided', async () => {
+			mockReq = {
+				cookies: {
+					accessToken: validToken,
+				},
+			};
+
+			await optionalAuthMiddleware(mockReq as Request, mockRes, mockNext);
+
+			expect(mockNext).toHaveBeenCalled();
+			expect(mockReq.user?.id).toBe(userId);
+		});
+
+		it('should not set user when no token is provided', async () => {
+			mockReq = {
+				cookies: {},
+			};
+
+			await optionalAuthMiddleware(mockReq as Request, mockRes, mockNext);
+
+			expect(mockNext).toHaveBeenCalled();
+			expect(mockReq.user).toBeUndefined();
+		});
+
+		it('should not set user when token is invalid', async () => {
+			mockReq = {
+				cookies: {
+					accessToken: 'invalidtoken',
+				},
+			};
+
+			await optionalAuthMiddleware(mockReq as Request, mockRes, mockNext);
+
+			expect(mockNext).toHaveBeenCalled();
+			expect(mockReq.user).toBeUndefined();
+		});
 	});
 });

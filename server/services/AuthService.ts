@@ -39,8 +39,18 @@ export class AuthService {
 		return { token: accessToken, refreshToken, user };
 	}
 
-	static async login(email: string, password: string): Promise<AuthPayload> {
-		const user = await User.findByEmail(email);
+	static async login(
+		identifier: string,
+		password: string
+	): Promise<AuthPayload> {
+		// Try to find user by email first
+		let user = await User.findByEmail(identifier);
+
+		// If not found by email, try username
+		if (!user) {
+			user = await User.findByUsername(identifier);
+		}
+
 		if (!user) {
 			throw new BadRequestError('Invalid credentials');
 		}
