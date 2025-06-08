@@ -1,7 +1,7 @@
 import { PostLike as PostLikeHelper } from '../helpers/PostLike';
 import { Post as PostHelper } from '../helpers/Post';
 import { PostLike as PostLikeType } from '../types';
-import { NotFoundError, ConflictError } from '../utils/errors';
+import { NotFoundError, BadRequestError } from '../errors';
 
 export class PostLikeService {
 	static async likePost(userId: number, postId: number): Promise<PostLikeType> {
@@ -12,7 +12,7 @@ export class PostLikeService {
 
 		const existingLike = await PostLikeHelper.findByUserAndPost(userId, postId);
 		if (existingLike) {
-			throw new ConflictError('You have already liked this post');
+			throw new BadRequestError('You have already liked this post');
 		}
 
 		const like = await PostLikeHelper.create(userId, postId);

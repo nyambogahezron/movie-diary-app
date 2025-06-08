@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -17,7 +17,8 @@ import analyticsRoutes from './routes/analytics';
 import { analyticsMiddleware } from './middleware/analytics';
 
 import { generateCsrfToken } from './middleware/csrf';
-import { errorHandler } from './middleware/errorHandler';
+import errorHandler from './middleware/errorHandler';
+import NotFoundHandler from './middleware/notFound';
 
 const app = express();
 const PORT = config.server.port;
@@ -65,7 +66,6 @@ app.use(
 );
 
 // Middleware
-app.use(errorHandler);
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser(config.security.cookieSecret));
 app.use(analyticsMiddleware);
@@ -85,6 +85,9 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.get('/', (_req, res) => {
 	res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
+
+app.use(errorHandler as ErrorRequestHandler);
+app.use(NotFoundHandler);
 
 app.listen(PORT, () => {
 	console.log(

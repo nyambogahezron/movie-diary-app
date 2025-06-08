@@ -1,3 +1,4 @@
+import { BadRequestError, NotFoundError } from '../errors';
 import { Favorite } from '../helpers/Favorite';
 import { Movie } from '../helpers/Movie';
 import {
@@ -6,32 +7,24 @@ import {
 	User,
 	SearchInput,
 } from '../types';
-import {
-	AuthorizationError,
-	NotFoundError,
-	ConflictError,
-} from '../utils/errors';
 
 export class FavoriteService {
 	static async addFavorite(movieId: number, user: User): Promise<FavoriteType> {
-		// Check if the movie exists
 		const movie = await Movie.findById(movieId);
 
 		if (!movie) {
 			throw new NotFoundError('Movie not found');
 		}
 
-		// Check if the movie is already favorited by the user
 		const existingFavorite = await Favorite.findByUserIdAndMovieId(
 			user.id,
 			movieId
 		);
 
 		if (existingFavorite) {
-			throw new ConflictError('Movie is already in favorites');
+			throw new BadRequestError('Movie is already in favorites');
 		}
 
-		// Add the movie to favorites
 		return await Favorite.create({
 			userId: user.id,
 			movieId,
@@ -39,21 +32,18 @@ export class FavoriteService {
 	}
 
 	static async removeFavorite(movieId: number, user: User): Promise<void> {
-		// Check if the movie exists
 		const movie = await Movie.findById(movieId);
 
 		if (!movie) {
 			throw new NotFoundError('Movie not found');
 		}
 
-		// Check if the movie is in the user's favorites
 		const favorite = await Favorite.findByUserIdAndMovieId(user.id, movieId);
 
 		if (!favorite) {
 			throw new NotFoundError('Movie is not in favorites');
 		}
 
-		// Remove the movie from favorites
 		await Favorite.delete(user.id, movieId);
 	}
 
@@ -61,10 +51,8 @@ export class FavoriteService {
 		user: User,
 		params?: SearchInput
 	): Promise<MovieType[]> {
-		// Get all movies in user's favorites
 		let movies = await Favorite.getFavoriteMoviesByUserId(user.id);
 
-		// Apply search filter if provided
 		if (params?.search) {
 			const searchTerm = params.search.toLowerCase();
 			movies = movies.filter(
@@ -99,14 +87,12 @@ export class FavoriteService {
 	}
 
 	static async isFavorite(movieId: number, user: User): Promise<boolean> {
-		// Check if the movie exists
 		const movie = await Movie.findById(movieId);
 
 		if (!movie) {
 			throw new NotFoundError('Movie not found');
 		}
 
-		// Check if the movie is in the user's favorites
 		return Favorite.isFavorite(user.id, movieId);
 	}
 }

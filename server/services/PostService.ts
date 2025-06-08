@@ -1,6 +1,6 @@
 import { Post as PostHelper } from '../helpers/Post';
 import { Post as PostType, PostInput, PostSearchInput } from '../types';
-import { NotFoundError, AuthorizationError } from '../utils/errors';
+import { NotFoundError, UnauthorizedError } from '../errors';
 
 export class PostService {
 	/**
@@ -27,7 +27,7 @@ export class PostService {
 		}
 
 		if (!post.isPublic && post.userId !== userId) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this post'
 			);
 		}
@@ -58,7 +58,7 @@ export class PostService {
 
 		// Only the post owner can update it
 		if (post.userId !== userId) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to update this post'
 			);
 		}
@@ -74,7 +74,7 @@ export class PostService {
 
 		// Only the post owner can delete it
 		if (post.userId !== userId) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to delete this post'
 			);
 		}

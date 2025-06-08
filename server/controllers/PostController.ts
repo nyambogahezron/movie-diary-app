@@ -4,8 +4,7 @@ import { PostLikeService } from '../services/PostLikeService';
 import { PostCommentService } from '../services/PostCommentService';
 import { PostInput, PostCommentInput, PostSearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { AuthorizationError } from '../utils/errors';
-
+import { BadRequestError } from '../errors';
 export class PostController {
 	/**
 	 * Create a new post
@@ -13,7 +12,7 @@ export class PostController {
 	static createPost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postData: PostInput = req.body;
@@ -59,7 +58,7 @@ export class PostController {
 	static getUserPosts = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const params: PostSearchInput = {
@@ -119,7 +118,7 @@ export class PostController {
 	static updatePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postId = Number(req.params.id);
@@ -143,7 +142,7 @@ export class PostController {
 	static deletePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postId = Number(req.params.id);
@@ -166,7 +165,7 @@ export class PostController {
 	static likePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postId = Number(req.params.id);
@@ -189,7 +188,7 @@ export class PostController {
 	static unlikePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postId = Number(req.params.id);
@@ -212,7 +211,7 @@ export class PostController {
 	static addComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const postId = Number(req.params.id);
@@ -261,7 +260,7 @@ export class PostController {
 	static updateComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const commentId = Number(req.params.commentId);
@@ -285,7 +284,7 @@ export class PostController {
 	static deleteComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const commentId = Number(req.params.commentId);

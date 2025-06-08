@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import { WatchlistService } from '../services/WatchlistService';
-import { SearchInput, WatchlistInput } from '../types';
+import { SearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { AuthorizationError } from '../utils/errors';
+import { BadRequestError } from '../errors';
 
 export class WatchlistController {
 	static createWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const { name, description, isPublic } = req.body;
@@ -36,7 +36,7 @@ export class WatchlistController {
 	static getUserWatchlists = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlists = await WatchlistService.getWatchlists(req.user);
@@ -86,7 +86,7 @@ export class WatchlistController {
 	static getWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
@@ -110,7 +110,7 @@ export class WatchlistController {
 	static updateWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
@@ -135,7 +135,7 @@ export class WatchlistController {
 	static deleteWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
@@ -155,7 +155,7 @@ export class WatchlistController {
 	static addMovieToWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
@@ -180,7 +180,7 @@ export class WatchlistController {
 	static removeMovieFromWatchlist = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);
@@ -205,7 +205,7 @@ export class WatchlistController {
 	static getWatchlistMovies = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const watchlistId = Number(req.params.id);

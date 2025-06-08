@@ -3,15 +3,9 @@ import { User } from '../helpers/User';
 import { AuthPayload, JwtPayload, User as UserType } from '../types';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import { BadRequestError } from './../errors';
 
 dotenv.config();
-
-export class AuthenticationError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = 'AuthenticationError';
-	}
-}
 
 export class AuthService {
 	private static readonly JWT_SECRET =
@@ -29,12 +23,13 @@ export class AuthService {
 	): Promise<AuthPayload> {
 		const existingUserByEmail = await User.findByEmail(email);
 		if (existingUserByEmail) {
-			throw new AuthenticationError('Email is already registered');
+			throw new BadRequestError('Email is already registered');
 		}
 
 		const existingUserByUsername = await User.findByUsername(username);
+
 		if (existingUserByUsername) {
-			throw new AuthenticationError('Username is already taken');
+			throw new BadRequestError('Username is already taken');
 		}
 
 		const user = await User.create({ name, username, email, password });
@@ -47,12 +42,12 @@ export class AuthService {
 	static async login(email: string, password: string): Promise<AuthPayload> {
 		const user = await User.findByEmail(email);
 		if (!user) {
-			throw new AuthenticationError('Invalid credentials');
+			throw new BadRequestError('Invalid credentials');
 		}
 
 		const isPasswordValid = await User.comparePassword(user.password, password);
 		if (!isPasswordValid) {
-			throw new AuthenticationError('Invalid credentials');
+			throw new BadRequestError('Invalid credentials');
 		}
 
 		const { accessToken, refreshToken } = this.generateTokens(user);
@@ -69,15 +64,15 @@ export class AuthService {
 			const user = await User.findById(decoded.userId);
 
 			if (!user) {
-				throw new AuthenticationError('User not found');
+				throw new BadRequestError('User not found');
 			}
 
 			return user;
 		} catch (error) {
 			if (error instanceof jwt.TokenExpiredError) {
-				throw new AuthenticationError('Token expired');
+				throw new BadRequestError('Token expired');
 			}
-			throw new AuthenticationError('Invalid token');
+			throw new BadRequestError('Invalid token');
 		}
 	}
 
@@ -95,7 +90,7 @@ export class AuthService {
 			const user = await User.findById(decoded.userId);
 
 			if (!user) {
-				throw new AuthenticationError('User not found');
+				throw new BadRequestError('User not found');
 			}
 
 			// Generate a new access token
@@ -104,11 +99,9 @@ export class AuthService {
 			return { accessToken };
 		} catch (error) {
 			if (error instanceof jwt.TokenExpiredError) {
-				throw new AuthenticationError(
-					'Refresh token expired, please login again'
-				);
+				throw new BadRequestError('Refresh token expired, please login again');
 			}
-			throw new AuthenticationError('Invalid refresh token');
+			throw new BadRequestError('Invalid refresh token');
 		}
 	}
 

@@ -7,11 +7,7 @@ import {
 	User,
 	SearchInput,
 } from '../types';
-import {
-	AuthorizationError,
-	NotFoundError,
-	ConflictError,
-} from '../utils/errors';
+import { UnauthorizedError, NotFoundError, BadRequestError } from '../errors';
 
 export class WatchlistMovieService {
 	static async addMovieToWatchlist(
@@ -26,7 +22,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to modify this watchlist'
 			);
 		}
@@ -47,7 +43,7 @@ export class WatchlistMovieService {
 				error instanceof Error &&
 				error.message.includes('already in the watchlist')
 			) {
-				throw new ConflictError('Movie is already in the watchlist');
+				throw new BadRequestError('Movie is already in the watchlist');
 			}
 			throw error;
 		}
@@ -65,7 +61,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to modify this watchlist'
 			);
 		}
@@ -94,7 +90,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this watchlist'
 			);
 		}
@@ -114,7 +110,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this watchlist'
 			);
 		}
@@ -139,7 +135,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this watchlist'
 			);
 		}
@@ -161,7 +157,7 @@ export class WatchlistMovieService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to modify this watchlist'
 			);
 		}

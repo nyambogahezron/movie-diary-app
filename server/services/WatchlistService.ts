@@ -7,11 +7,7 @@ import {
 	User,
 	SearchInput,
 } from '../types';
-import {
-	AuthorizationError,
-	NotFoundError,
-	ConflictError,
-} from '../utils/errors';
+import { UnauthorizedError, NotFoundError, BadRequestError } from '../errors';
 
 export class WatchlistService {
 	static async createWatchlist(
@@ -27,7 +23,7 @@ export class WatchlistService {
 			});
 		} catch (error) {
 			if (error instanceof Error && error.message.includes('already exists')) {
-				throw new ConflictError('A watchlist with this name already exists');
+				throw new BadRequestError('A watchlist with this name already exists');
 			}
 			throw error;
 		}
@@ -49,7 +45,7 @@ export class WatchlistService {
 
 		// Check if the user can access this watchlist
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this watchlist'
 			);
 		}
@@ -75,7 +71,7 @@ export class WatchlistService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to update this watchlist'
 			);
 		}
@@ -100,7 +96,7 @@ export class WatchlistService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to delete this watchlist'
 			);
 		}
@@ -128,7 +124,7 @@ export class WatchlistService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to modify this watchlist'
 			);
 		}
@@ -157,7 +153,7 @@ export class WatchlistService {
 		}
 
 		if (watchlist.userId !== user.id) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to modify this watchlist'
 			);
 		}
@@ -179,7 +175,7 @@ export class WatchlistService {
 
 		// Check if the user can access this watchlist
 		if (watchlist.userId !== user.id && !watchlist.isPublic) {
-			throw new AuthorizationError(
+			throw new UnauthorizedError(
 				'You do not have permission to view this watchlist'
 			);
 		}

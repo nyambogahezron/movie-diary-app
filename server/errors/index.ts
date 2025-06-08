@@ -1,37 +1,51 @@
-import { AppError } from '../middleware/errorHandler';
+import { StatusCodes } from 'http-status-codes';
 
-export class AuthenticationError extends AppError {
+export default class CustomError extends Error {
+	statusCode: number;
+
+	constructor({
+		message,
+		statusCode,
+	}: {
+		message: string;
+		statusCode: number;
+	}) {
+		super(message);
+		this.statusCode = statusCode;
+	}
+}
+
+export class NotFoundError extends CustomError {
 	constructor(message: string) {
-		super(message, 401);
+		super({ message, statusCode: StatusCodes.NOT_FOUND });
+		this.statusCode = StatusCodes.NOT_FOUND;
 	}
 }
 
-export class AuthorizationError extends AppError {
-	constructor(message: string = 'Not authorized') {
-		super(message, 403, 'AUTHORIZATION_ERROR');
-	}
-}
-
-export class ValidationError extends AppError {
+export class BadRequestError extends CustomError {
 	constructor(message: string) {
-		super(message, 400);
+		super({ message, statusCode: StatusCodes.BAD_REQUEST });
+		this.statusCode = StatusCodes.BAD_REQUEST;
 	}
 }
 
-export class NotFoundError extends AppError {
+export class UnauthorizedError extends CustomError {
 	constructor(message: string) {
-		super(message, 404);
+		super({ message, statusCode: StatusCodes.UNAUTHORIZED });
+		this.statusCode = StatusCodes.UNAUTHORIZED;
 	}
 }
 
-export class ConflictError extends AppError {
-	constructor(message: string = 'Resource already exists') {
-		super(message, 409, 'CONFLICT_ERROR');
-	}
-}
-
-export class ForbiddenError extends AppError {
+export class ForbiddenError extends CustomError {
 	constructor(message: string) {
-		super(message, 403);
+		super({ message, statusCode: StatusCodes.FORBIDDEN });
+		this.statusCode = StatusCodes.FORBIDDEN;
+	}
+}
+
+export class InternalServerError extends CustomError {
+	constructor(message: string) {
+		super({ message, statusCode: StatusCodes.INTERNAL_SERVER_ERROR });
+		this.statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
 	}
 }

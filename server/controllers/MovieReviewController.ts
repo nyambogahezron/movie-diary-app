@@ -2,13 +2,13 @@ import { Request, Response } from 'express';
 import { MovieReviewService } from '../services/MovieReviewService';
 import { MovieReviewInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { AuthorizationError } from '../utils/errors';
+import { BadRequestError } from '../errors';
 
 export class MovieReviewController {
 	static addReview = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.movieId);
@@ -49,7 +49,7 @@ export class MovieReviewController {
 	static getMovieReviews = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.movieId);
@@ -72,7 +72,7 @@ export class MovieReviewController {
 	static getReview = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
@@ -92,7 +92,7 @@ export class MovieReviewController {
 	static updateReview = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
@@ -134,7 +134,7 @@ export class MovieReviewController {
 	static deleteReview = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const reviewId = Number(req.params.id);
@@ -153,7 +153,7 @@ export class MovieReviewController {
 	static getUserReviews = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const reviews = await MovieReviewService.getUserReviews(req.user);

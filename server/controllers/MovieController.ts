@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import { MovieService } from '../services/MovieService';
 import { FavoriteService } from '../services/FavoriteService';
-import { SearchInput, MovieInput } from '../types';
+import { SearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { AuthorizationError } from '../utils/errors';
+import { BadRequestError } from '../errors';
 
 export class MovieController {
 	static addMovie = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const {
@@ -53,7 +53,7 @@ export class MovieController {
 	static getMovie = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.id);
@@ -74,7 +74,7 @@ export class MovieController {
 	static getUserMovies = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const searchParams: SearchInput = {};
@@ -111,7 +111,7 @@ export class MovieController {
 	static updateMovie = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.id);
@@ -132,7 +132,7 @@ export class MovieController {
 	static deleteMovie = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.id);
@@ -152,7 +152,7 @@ export class MovieController {
 	static toggleFavorite = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const movieId = Number(req.params.id);
@@ -180,7 +180,7 @@ export class MovieController {
 	static getFavorites = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
-				throw new AuthorizationError('Authentication required');
+				throw new BadRequestError('Authentication required');
 			}
 
 			const searchParams: SearchInput = {};
