@@ -3,15 +3,53 @@ import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name').notNull(),
-	username: text('username').notNull().unique(),
 	email: text('email').notNull().unique(),
+	username: text('username').notNull().unique(),
 	password: text('password').notNull(),
-	avatar: text('avatar'),
+	role: text('role', { enum: ['USER', 'ADMIN', 'MODERATOR'] })
+		.notNull()
+		.default('USER'),
+	isEmailVerified: integer('is_email_verified', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	isAccountLocked: integer('is_account_locked', { mode: 'boolean' })
+		.notNull()
+		.default(false),
+	emailVerificationToken: text('email_verification_token'),
+	emailVerificationTokenExpires: text('email_verification_token_expires'),
+	passwordResetToken: text('password_reset_token'),
+	passwordResetTokenExpires: text('password_reset_token_expires'),
+	failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
+	lastFailedLogin: text('last_failed_login'),
 	createdAt: text('created_at')
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 	updatedAt: text('updated_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+export const refreshTokens = sqliteTable('refresh_tokens', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	token: text('token').notNull().unique(),
+	expiresAt: text('expires_at').notNull(),
+	createdAt: text('created_at')
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+export const loginAttempts = sqliteTable('login_attempts', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: integer('user_id').references(() => users.id, {
+		onDelete: 'cascade',
+	}),
+	ipAddress: text('ip_address').notNull(),
+	userAgent: text('user_agent'),
+	success: integer('success', { mode: 'boolean' }).notNull(),
+	timestamp: text('timestamp')
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 });

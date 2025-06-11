@@ -1,98 +1,130 @@
-import express, { ErrorRequestHandler } from 'express';
+import express, { Request, Response } from 'express';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { json } from 'body-parser';
 import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
-
+import {
+	errorHandler,
+	formatGraphQLError,
+	asyncErrorBoundary,
+} from './middleware/errorHandler';
+import { generalRateLimiter, authRateLimiter } from './middleware/rateLimit';
+import { authMiddleware } from './middleware/auth';
+import { authDirectiveTransformer } from './graphql/directives';
+import typeDefs from './graphql/schema';
+import { resolvers } from './graphql/resolvers';
+import { GraphQLContext } from './graphql/context';
+import { UserService } from './services/user';
+import { MovieService } from './services/movie';
+import { WatchlistService } from './services/watchlist';
+import { MovieReviewService } from './services/movieReview';
+import { FavoriteService } from './services/favorite';
 import { config } from './config';
+import { BaseContext } from '@apollo/server';
 
-import authRoutes from './routes/auth';
-import movieRoutes from './routes/movies';
-import watchlistRoutes from './routes/watchlists';
-import favoriteRoutes from './routes/favorites';
-import movieReviewRoutes from './routes/movieReviews';
-import postRoutes from './routes/posts';
-import analyticsRoutes from './routes/analytics';
+interface RequestContext extends BaseContext {
+	req: Request;
+	res: Response;
+}
 
-import { analyticsMiddleware } from './middleware/analytics';
+async function startServer() {
+	const app = express();
 
-import { generateCsrfToken } from './middleware/csrf';
-import errorHandler from './middleware/errorHandler';
-import NotFoundHandler from './middleware/notFound';
-
-const app = express();
-const PORT = config.server.port;
-
-const limiter = rateLimit({
-	windowMs: config.rateLimit.windowMs,
-	max: config.rateLimit.maxRequestsPerWindow,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: 'Too many requests from this IP, please try again later',
-});
-
-app.use(limiter);
-
-app.use(
-	helmet({
-		contentSecurityPolicy: config.server.isProduction ? undefined : false,
-	})
-);
-
-// Apply security headers
-app.use((req, res, next) => {
-	res.setHeader('X-Content-Type-Options', 'nosniff');
-	res.setHeader('X-Frame-Options', 'DENY');
-	res.setHeader('X-XSS-Protection', '1; mode=block');
-	res.setHeader(
-		'Strict-Transport-Security',
-		'max-age=31536000; includeSubDomains'
+	// Apply middleware
+	app.use(json());
+	app.use(cookieParser());
+	app.use(
+		cors({
+			origin: config.frontendUrl,
+			credentials: true,
+		})
 	);
-	next();
-});
 
-app.use(
-	cors({
-		origin: config.security.cors.origin,
-		methods: ['GET', 'POST', 'PUT', 'DELETE'],
-		credentials: config.security.cors.credentials,
-		allowedHeaders: [
-			'Content-Type',
-			'Authorization',
-			'X-CSRF-Token',
-			'X-API-Client',
+	// Apply rate limiting
+	app.use(generalRateLimiter);
+	app.use('/graphql', authRateLimiter);
+
+	// Apply authentication middleware
+	app.use(authMiddleware);
+
+	// Create Apollo Server
+	const server = new ApolloServer<GraphQLContext>({
+		typeDefs,
+		resolvers,
+		formatError: formatGraphQLError,
+		plugins: [
+			{
+				async requestDidStart() {
+					return {
+						async willSendResponse(requestContext: {
+							response: { http?: { headers: Headers } };
+						}) {
+							// Add security headers
+							const { response } = requestContext;
+							if (response.http) {
+								response.http.headers.set('X-Content-Type-Options', 'nosniff');
+								response.http.headers.set('X-Frame-Options', 'DENY');
+								response.http.headers.set('X-XSS-Protection', '1; mode=block');
+								response.http.headers.set(
+									'Strict-Transport-Security',
+									'max-age=31536000; includeSubDomains'
+								);
+								response.http.headers.set(
+									'Content-Security-Policy',
+									"default-src 'self'"
+								);
+							}
+						},
+					};
+				},
+			},
 		],
-	})
-);
+	});
 
-// Middleware
-app.use(express.json({ limit: '1mb' }));
-app.use(cookieParser(config.security.cookieSecret));
-app.use(analyticsMiddleware);
+	// Start Apollo Server
+	await server.start();
 
-// CSRF token endpoint
-app.get('/api/v1/csrf-token', generateCsrfToken);
+	// Apply Apollo middleware
+	app.use(
+		'/graphql',
+		expressMiddleware(server, {
+			context: async ({ req, res }: RequestContext) => {
+				// Create service instances
+				const userService = new UserService();
+				const movieService = new MovieService();
+				const watchlistService = new WatchlistService();
+				const reviewService = new MovieReviewService();
+				const favoriteService = new FavoriteService();
 
-// Routes
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/movies', movieRoutes);
-app.use('/api/v1/watchlists', watchlistRoutes);
-app.use('/api/v1/favorites', favoriteRoutes);
-app.use('/api/v1/reviews', movieReviewRoutes);
-app.use('/api/v1/posts', postRoutes);
-app.use('/api/v1/analytics', analyticsRoutes);
-
-app.get('/', (_req, res) => {
-	res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
-
-app.use(errorHandler as ErrorRequestHandler);
-app.use(NotFoundHandler);
-
-app.listen(PORT, () => {
-	console.log(
-		`Server is running  http://localhost:${PORT} in ${config.server.nodeEnv} mode`
+				return {
+					req,
+					res,
+					user: req.user,
+					services: {
+						user: userService,
+						movie: movieService,
+						watchlist: watchlistService,
+						review: reviewService,
+						favorite: favoriteService,
+					},
+				};
+			},
+		})
 	);
-});
 
-export default app;
+	// Apply error handling middleware last
+	app.use(errorHandler);
+
+	// Start server
+	const port = config.port;
+	app.listen(port, () => {
+		console.log(`🚀 Server ready at http://localhost:${port}/graphql`);
+	});
+}
+
+// Wrap server startup in error boundary
+startServer().catch((error) => {
+	console.error('Failed to start server:', error);
+	process.exit(1);
+});

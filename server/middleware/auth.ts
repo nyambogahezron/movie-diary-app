@@ -1,67 +1,77 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../services/AuthService';
-import { User } from '../types';
+import jwt from 'jsonwebtoken';
+import { config } from '../config';
+import { UserService } from '../services/user';
 
+// Extend Express Request type
 declare global {
 	namespace Express {
 		interface Request {
-			user?: User;
+			user?: {
+				id: number;
+				email: string;
+				username: string;
+				role?: string;
+			};
 		}
 	}
 }
 
 export const authMiddleware = async (
 	req: Request,
-	res: Response,
+	_res: Response,
 	next: NextFunction
-): Promise<void> => {
+) => {
 	try {
-		const accessToken = req.cookies.accessToken;
+		// Get token from Authorization header or cookie
+		const token = req.headers.authorization?.split(' ')[1] || req.cookies.token;
 
-		if (!accessToken) {
-			res.status(401).json({ error: 'No authentication token provided' });
-			return;
+		if (!token) {
+			return next();
 		}
 
-		try {
-			const user = await AuthService.verifyToken(accessToken);
-			req.user = user;
-			next();
-		} catch (error: any) {
-			if (error.message === 'Token expired') {
-				res.status(401).json({
-					error: 'Token expired',
-					code: 'TOKEN_EXPIRED',
-				});
-				return;
-			}
+		// Verify token
+		const decoded = jwt.verify(token, config.security.jwtSecret) as {
+			id: number;
+			email: string;
+			username: string;
+			role?: string;
+		};
 
-			throw error;
-		}
+		// Attach user to request
+		req.user = decoded;
+
+		next();
 	} catch (error) {
-		res
-			.status(401)
-			.json({ error: 'Authentication failed: ' + (error as Error).message });
+		// Token is invalid or expired
+		next();
 	}
 };
 
-export const optionalAuthMiddleware = async (
+// Middleware to require authentication
+export const requireAuth = (
 	req: Request,
-	res: Response,
+	_res: Response,
 	next: NextFunction
-): Promise<void> => {
-	try {
-		const accessToken = req.cookies.accessToken;
-
-		if (accessToken) {
-			try {
-				const user = await AuthService.verifyToken(accessToken);
-				req.user = user;
-			} catch (error) {}
-		}
-
-		next();
-	} catch (error) {
-		next();
+) => {
+	if (!req.user) {
+		throw new Error('Authentication required');
 	}
+	next();
+};
+
+// Middleware to require admin role (if you implement roles later)
+export const requireAdmin = (
+	req: Request,
+	_res: Response,
+	next: NextFunction
+) => {
+	if (!req.user) {
+		throw new Error('Authentication required');
+	}
+	// Add role check when you implement roles
+	// if (req.user.role !== 'admin') {
+	//   throw new Error('Admin access required');
+	// }
+	next();
 };
