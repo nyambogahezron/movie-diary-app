@@ -6,9 +6,6 @@ import { PostInput, PostCommentInput, PostSearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
 import { BadRequestError } from '../errors';
 export class PostController {
-	/**
-	 * Create a new post
-	 */
 	static createPost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -26,9 +23,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Get a post by ID
-	 */
 	static getPost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			const postId = Number(req.params.id);
@@ -38,8 +32,6 @@ export class PostController {
 
 			const userId = req.user?.id;
 			const post = await PostService.getPostById(postId, userId);
-
-			// Check if the user has liked this post
 			const hasLiked = userId
 				? await PostLikeService.hasUserLikedPost(userId, postId)
 				: false;
@@ -52,9 +44,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Get posts by current user
-	 */
 	static getUserPosts = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -88,9 +77,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Get post feed
-	 */
 	static getFeed = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			const userId = req.user?.id;
@@ -112,9 +98,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Update a post
-	 */
 	static updatePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -135,10 +118,6 @@ export class PostController {
 			});
 		}
 	);
-
-	/**
-	 * Delete a post
-	 */
 	static deletePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -159,9 +138,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Like a post
-	 */
 	static likePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -182,9 +158,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Unlike a post
-	 */
 	static unlikePost = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -205,9 +178,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Add a comment to a post
-	 */
 	static addComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -234,9 +204,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Get comments for a post
-	 */
 	static getComments = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			const postId = Number(req.params.id);
@@ -254,9 +221,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Update a comment
-	 */
 	static updateComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {
@@ -278,9 +242,6 @@ export class PostController {
 		}
 	);
 
-	/**
-	 * Delete a comment
-	 */
 	static deleteComment = AsyncHandler(
 		async (req: Request, res: Response): Promise<void> => {
 			if (!req.user) {

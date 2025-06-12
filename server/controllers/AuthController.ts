@@ -115,8 +115,6 @@ export class AuthController {
 						id: req.user.id,
 						username: req.user.username,
 						email: req.user.email,
-						avatar: req.user.avatar,
-						createdAt: req.user.createdAt,
 					},
 				},
 			});

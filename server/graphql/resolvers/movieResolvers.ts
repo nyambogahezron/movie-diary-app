@@ -1,7 +1,8 @@
 import { IResolvers } from '@graphql-tools/utils';
 import { AuthenticationError, UserInputError } from 'apollo-server-express';
 import { GraphQLContext } from '../context';
-import { MovieController } from '../../api/controllers/MovieController';
+// Import directly from controllers directory, not api/controllers
+import { MovieController } from '../../controllers/MovieController';
 
 export const movieResolvers: IResolvers = {
 	Query: {

@@ -1,10 +1,5 @@
+import { BadRequestError, UnauthorizedError } from '@/errors';
 import { GraphQLContext } from '../context';
-import { MovieService } from '../../services/movie';
-import { MovieReviewService } from '../../services/review';
-import { WatchlistService } from '../../services/watchlist';
-import { FavoriteService } from '../../services/favorite';
-import { UserService } from '../../services/user';
-import { NotFoundError, BadRequestError } from '../../utils/errors';
 
 export const advancedResolvers = {
 	Query: {
@@ -13,9 +8,14 @@ export const advancedResolvers = {
 			{ input }: { input: any },
 			{ services }: GraphQLContext
 		) => {
-			const { movies, total, page, totalPages, hasMore } =
-				await services.movie.searchMovies(input);
-			return { movies, total, page, totalPages, hasMore };
+			const movies = await services.movie.search(input);
+			return {
+				movies,
+				total: movies.length,
+				page: input.offset ? Math.floor(input.offset / input.limit) + 1 : 1,
+				totalPages: Math.ceil(movies.length / (input.limit || 10)),
+				hasMore: movies.length === (input.limit || 10),
+			};
 		},
 
 		userStats: async (
@@ -23,7 +23,7 @@ export const advancedResolvers = {
 			{ userId }: { userId: string },
 			{ services, user }: GraphQLContext
 		) => {
-			if (user.id !== parseInt(userId) && user.role !== 'ADMIN') {
+			if (user?.id !== parseInt(userId) && user?.role !== 'ADMIN') {
 				throw new UnauthorizedError('Not authorized to view these stats');
 			}
 
@@ -34,16 +34,42 @@ export const advancedResolvers = {
 				totalFavorites,
 				mostWatchedGenres,
 				recentActivity,
-				monthlyStats,
 			] = await Promise.all([
-				services.review.getUserReviewCount(userId),
-				services.review.getUserAverageRating(userId),
-				services.watchlist.getUserWatchlistCount(userId),
-				services.favorite.getUserFavoriteCount(userId),
-				services.movie.getUserMostWatchedGenres(userId),
-				services.user.getUserRecentActivity(userId),
-				services.user.getUserMonthlyStats(userId, new Date().getFullYear()),
+				services.review.getReviewCount(parseInt(userId)),
+				services.review.getAverageRating(parseInt(userId)),
+				services.watchlist.getMovieCount(parseInt(userId)),
+				services.favorite
+					.findByUserId(parseInt(userId), { limit: 1000 })
+					.then((favorites) => favorites.length),
+				services.movie.findPopularByGenre('all', 1000).then((movies) => {
+					const genres = movies.flatMap((movie) =>
+						JSON.parse(movie.genres || '[]')
+					);
+					const genreCount = genres.reduce((acc, genre) => {
+						acc[genre] = (acc[genre] || 0) + 1;
+						return acc;
+					}, {} as Record<string, number>);
+					const entries = Object.entries(genreCount) as [string, number][];
+					return entries
+						.sort(([, a], [, b]) => b - a)
+						.slice(0, 5)
+						.map(([genre]) => genre);
+				}),
+				services.review
+					.findRecent(10)
+					.then((reviews) =>
+						reviews.filter((review) => review.userId === parseInt(userId))
+					),
 			]);
+
+			const monthlyStats = {
+				year: new Date().getFullYear(),
+				totalMovies: totalWatchlist,
+				totalReviews,
+				averageRating,
+				totalFavorites,
+				mostWatchedGenres,
+			};
 
 			return {
 				totalReviews,
@@ -65,10 +91,14 @@ export const advancedResolvers = {
 			}: { userId: string; type?: string; limit?: number },
 			{ services, user }: GraphQLContext
 		) => {
-			if (user.id !== parseInt(userId) && user.role !== 'ADMIN') {
+			if (user?.id !== parseInt(userId) && user?.role !== 'ADMIN') {
 				throw new UnauthorizedError('Not authorized to view this activity');
 			}
-			return services.user.getUserActivity(userId, type, limit);
+			return services.review
+				.findRecent(limit || 10)
+				.then((reviews) =>
+					reviews.filter((review) => review.userId === parseInt(userId))
+				);
 		},
 
 		userMonthlyStats: async (
@@ -76,10 +106,45 @@ export const advancedResolvers = {
 			{ userId, year }: { userId: string; year: number },
 			{ services, user }: GraphQLContext
 		) => {
-			if (user.id !== parseInt(userId) && user.role !== 'ADMIN') {
+			if (user?.id !== parseInt(userId) && user?.role !== 'ADMIN') {
 				throw new UnauthorizedError('Not authorized to view these stats');
 			}
-			return services.user.getUserMonthlyStats(userId, year);
+			const [
+				totalWatchlist,
+				totalReviews,
+				averageRating,
+				totalFavorites,
+				mostWatchedGenres,
+			] = await Promise.all([
+				services.watchlist.getMovieCount(parseInt(userId)),
+				services.review.getReviewCount(parseInt(userId)),
+				services.review.getAverageRating(parseInt(userId)),
+				services.favorite
+					.findByUserId(parseInt(userId), { limit: 1000 })
+					.then((favorites) => favorites.length),
+				services.movie.findPopularByGenre('all', 1000).then((movies) => {
+					const genres = movies.flatMap((movie) =>
+						JSON.parse(movie.genres || '[]')
+					);
+					const genreCount = genres.reduce((acc, genre) => {
+						acc[genre] = (acc[genre] || 0) + 1;
+						return acc;
+					}, {} as Record<string, number>);
+					const entries = Object.entries(genreCount) as [string, number][];
+					return entries
+						.sort(([, a], [, b]) => b - a)
+						.slice(0, 5)
+						.map(([genre]) => genre);
+				}),
+			]);
+			return {
+				year,
+				totalMovies: totalWatchlist,
+				totalReviews,
+				averageRating,
+				totalFavorites,
+				mostWatchedGenres,
+			};
 		},
 
 		recommendedMovies: async (
@@ -87,7 +152,8 @@ export const advancedResolvers = {
 			{ limit }: { limit: number },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.movie.getRecommendedMovies(user.id, limit);
+			if (!user) throw new UnauthorizedError('User not authenticated');
+			return services.movie.findPopular(limit);
 		},
 
 		similarMovies: async (
@@ -95,7 +161,7 @@ export const advancedResolvers = {
 			{ movieId, limit }: { movieId: string; limit: number },
 			{ services }: GraphQLContext
 		) => {
-			return services.movie.getSimilarMovies(movieId, limit);
+			return services.movie.findSimilar(parseInt(movieId), limit);
 		},
 
 		popularMoviesByGenre: async (
@@ -103,58 +169,37 @@ export const advancedResolvers = {
 			{ genre, limit }: { genre: string; limit: number },
 			{ services }: GraphQLContext
 		) => {
-			return services.movie.getPopularMoviesByGenre(genre, limit);
+			return services.movie.findPopularByGenre(genre, limit);
 		},
 
 		watchlistByStatus: async (
 			_: any,
 			{
+				watchlistId,
 				status,
-				limit,
-				offset,
-			}: { status: string; limit?: number; offset?: number },
-			{ services, user }: GraphQLContext
+			}: {
+				watchlistId: number;
+				status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH';
+			},
+			{ services }: GraphQLContext
 		) => {
-			return services.watchlist.getWatchlistByStatus(
-				user.id,
-				status,
-				limit,
-				offset
-			);
+			return services.watchlist.getWatchlistByStatus(watchlistId, status);
 		},
 
 		watchlistByYear: async (
 			_: any,
-			{
-				year,
-				limit,
-				offset,
-			}: { year: number; limit?: number; offset?: number },
-			{ services, user }: GraphQLContext
+			{ watchlistId, year }: { watchlistId: number; year: number },
+			{ services }: GraphQLContext
 		) => {
-			return services.watchlist.getWatchlistByYear(
-				user.id,
-				year,
-				limit,
-				offset
-			);
+			return services.watchlist.getWatchlistByYear(watchlistId, year);
 		},
 
 		watchlistByGenre: async (
 			_: any,
-			{
-				genre,
-				limit,
-				offset,
-			}: { genre: string; limit?: number; offset?: number },
-			{ services, user }: GraphQLContext
+			{ watchlistId, genre }: { watchlistId: number; genre: string },
+			{ services }: GraphQLContext
 		) => {
-			return services.watchlist.getWatchlistByGenre(
-				user.id,
-				genre,
-				limit,
-				offset
-			);
+			return services.watchlist.getWatchlistByGenre(watchlistId, genre);
 		},
 
 		reviewStats: async (
@@ -164,10 +209,10 @@ export const advancedResolvers = {
 		) => {
 			const [averageRating, totalReviews, ratingDistribution, topReviewers] =
 				await Promise.all([
-					services.review.getMovieAverageRating(movieId),
-					services.review.getMovieReviewCount(movieId),
-					services.review.getMovieRatingDistribution(movieId),
-					services.review.getMovieTopReviewers(movieId),
+					services.review.getAverageRating(parseInt(movieId)),
+					services.review.getMovieReviewCount(parseInt(movieId)),
+					services.review.getMovieRatingDistribution(parseInt(movieId)),
+					services.review.getMovieTopReviewers(parseInt(movieId)),
 				]);
 
 			return {
@@ -191,7 +236,7 @@ export const advancedResolvers = {
 			{ limit }: { limit: number },
 			{ services }: GraphQLContext
 		) => {
-			return services.review.getRecentReviews(limit);
+			return services.review.findRecent(limit);
 		},
 	},
 
@@ -201,33 +246,50 @@ export const advancedResolvers = {
 			{ input }: { input: { ids: string[]; action: string } },
 			{ services, user }: GraphQLContext
 		) => {
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+
 			const { ids, action } = input;
-			const results = { success: true, affectedIds: [], errors: [] };
+			const results: {
+				success: boolean;
+				affectedIds: number[];
+				errors: Array<{ id: string; message: string }>;
+			} = { success: true, affectedIds: [], errors: [] };
 
 			for (const id of ids) {
 				try {
+					const movieId = parseInt(id);
+					if (isNaN(movieId)) {
+						throw new Error('Invalid movie ID');
+					}
+
 					switch (action) {
 						case 'ADD_TO_WATCHLIST':
-							await services.watchlist.add(user.id, id);
+							await services.watchlist.add(user.id, movieId);
 							break;
 						case 'REMOVE_FROM_WATCHLIST':
-							await services.watchlist.remove(user.id, id);
+							await services.watchlist.remove(user.id, movieId);
 							break;
 						case 'ADD_TO_FAVORITES':
-							await services.favorite.add(user.id, id);
+							await services.favorite.add(user.id, movieId);
 							break;
 						case 'REMOVE_FROM_FAVORITES':
-							await services.favorite.remove(user.id, id);
+							await services.favorite.remove(user.id, movieId);
 							break;
 						case 'DELETE_REVIEWS':
-							await services.review.deleteByMovieId(user.id, id);
+							await services.review.deleteByMovieId(user.id, movieId);
 							break;
 						default:
 							throw new BadRequestError(`Invalid action: ${action}`);
 					}
-					results.affectedIds.push(id);
-				} catch (error) {
-					results.errors.push({ id, message: error.message });
+					results.affectedIds.push(movieId);
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'An unknown error occurred';
+					results.errors.push({ id, message: errorMessage });
 				}
 			}
 
@@ -240,20 +302,37 @@ export const advancedResolvers = {
 			{ movieIds, action }: { movieIds: string[]; action: string },
 			{ services, user }: GraphQLContext
 		) => {
-			const results = { success: true, affectedIds: [], errors: [] };
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+
+			const results: {
+				success: boolean;
+				affectedIds: number[];
+				errors: Array<{ id: string; message: string }>;
+			} = { success: true, affectedIds: [], errors: [] };
 
 			for (const movieId of movieIds) {
 				try {
+					const id = parseInt(movieId);
+					if (isNaN(id)) {
+						throw new Error('Invalid movie ID');
+					}
+
 					switch (action) {
 						case 'DELETE_REVIEWS':
-							await services.review.deleteByMovieId(user.id, movieId);
+							await services.review.deleteByMovieId(user.id, id);
 							break;
 						default:
 							throw new BadRequestError(`Invalid action: ${action}`);
 					}
-					results.affectedIds.push(movieId);
-				} catch (error) {
-					results.errors.push({ id: movieId, message: error.message });
+					results.affectedIds.push(id);
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'An unknown error occurred';
+					results.errors.push({ id: movieId, message: errorMessage });
 				}
 			}
 
@@ -266,17 +345,16 @@ export const advancedResolvers = {
 			{
 				movieId,
 				status,
-				rating,
-				review,
-			}: { movieId: string; status: string; rating?: number; review?: string },
+			}: { movieId: string; status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH' },
 			{ services, user }: GraphQLContext
 		) => {
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
 			return services.watchlist.updateStatus(
 				user.id,
-				movieId,
-				status,
-				rating,
-				review
+				parseInt(movieId),
+				status
 			);
 		},
 
@@ -287,28 +365,31 @@ export const advancedResolvers = {
 			}: {
 				input: Array<{
 					movieId: string;
-					status?: string;
-					rating?: number;
-					review?: string;
+					status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH';
 				}>;
 			},
 			{ services, user }: GraphQLContext
 		) => {
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
 			const results = [];
 			for (const item of input) {
-				const { movieId, status, rating, review } = item;
+				const { movieId, status } = item;
 				try {
 					const result = await services.watchlist.updateStatus(
 						user.id,
-						movieId,
-						status,
-						rating,
-						review
+						parseInt(movieId),
+						status
 					);
 					results.push(result);
-				} catch (error) {
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error
+							? error.message
+							: 'An unknown error occurred';
 					throw new BadRequestError(
-						`Failed to update movie ${movieId}: ${error.message}`
+						`Failed to update movie ${movieId}: ${errorMessage}`
 					);
 				}
 			}
@@ -324,7 +405,10 @@ export const advancedResolvers = {
 			}: { reviewId: string; rating?: number; content?: string },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.review.update(reviewId, user.id, { rating, content });
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.review.update(parseInt(reviewId), { rating, content });
 		},
 
 		deleteReview: async (
@@ -332,7 +416,10 @@ export const advancedResolvers = {
 			{ reviewId }: { reviewId: string },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.review.delete(reviewId, user.id);
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.review.delete(parseInt(reviewId));
 		},
 
 		reportReview: async (
@@ -340,7 +427,10 @@ export const advancedResolvers = {
 			{ reviewId, reason }: { reviewId: string; reason: string },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.review.report(reviewId, user.id, reason);
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.review.report(parseInt(reviewId), user.id, reason);
 		},
 
 		reorderWatchlist: async (
@@ -348,23 +438,52 @@ export const advancedResolvers = {
 			{ movieIds }: { movieIds: string[] },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.watchlist.reorder(user.id, movieIds);
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.watchlist.reorder(
+				user.id,
+				movieIds.map((id) => parseInt(id))
+			);
 		},
 
 		updateWatchlistPriority: async (
 			_: any,
-			{ movieId, priority }: { movieId: string; priority: number },
+			{
+				movieId,
+				priority,
+			}: { movieId: string; priority: 'HIGH' | 'MEDIUM' | 'LOW' },
 			{ services, user }: GraphQLContext
 		) => {
-			return services.watchlist.updatePriority(user.id, movieId, priority);
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.watchlist.updatePriority(
+				user.id,
+				parseInt(movieId),
+				priority
+			);
 		},
 
 		bulkUpdateWatchlistStatus: async (
 			_: any,
-			{ movieIds, status }: { movieIds: string[]; status: string },
+			{
+				movieIds,
+				status,
+			}: {
+				movieIds: string[];
+				status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH';
+			},
 			{ services, user }: GraphQLContext
 		) => {
-			return services.watchlist.bulkUpdateStatus(user.id, movieIds, status);
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
+			return services.watchlist.bulkUpdateStatus(
+				user.id,
+				movieIds.map((id) => parseInt(id)),
+				status
+			);
 		},
 
 		updateUserPreferences: async (
@@ -372,6 +491,9 @@ export const advancedResolvers = {
 			{ preferences }: { preferences: any },
 			{ services, user }: GraphQLContext
 		) => {
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
 			return services.user.updatePreferences(user.id, preferences);
 		},
 
@@ -380,6 +502,9 @@ export const advancedResolvers = {
 			{ settings }: { settings: any },
 			{ services, user }: GraphQLContext
 		) => {
+			if (!user) {
+				throw new UnauthorizedError('Not authenticated');
+			}
 			return services.user.updateNotificationSettings(user.id, settings);
 		},
 	},

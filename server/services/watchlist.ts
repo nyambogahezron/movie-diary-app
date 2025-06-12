@@ -130,4 +130,280 @@ export class WatchlistService {
 
 		return result?.count ?? 0;
 	}
+
+	async add(userId: number, movieId: number) {
+		// Find or create a default watchlist for the user
+		let watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			[watchlist] = await db
+				.insert(watchlists)
+				.values({
+					userId,
+					name: 'Default Watchlist',
+					isPublic: false,
+				})
+				.returning();
+		}
+
+		return this.addMovie(watchlist.id, movieId);
+	}
+
+	async remove(userId: number, movieId: number) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		return this.removeMovie(watchlist.id, movieId);
+	}
+
+	async updateStatus(
+		userId: number,
+		movieId: number,
+		status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH'
+	) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		// Update movie status in the watchlist
+		await db
+			.update(movies)
+			.set({
+				watchDate: status === 'WATCHED' ? new Date().toISOString() : null,
+			})
+			.where(eq(movies.id, movieId));
+
+		return this.findById(watchlist.id);
+	}
+
+	async reorder(userId: number, movieIds: number[]) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		// Implementation would depend on how you want to handle ordering
+		// This is a simplified version that could be enhanced
+		for (let i = 0; i < movieIds.length; i++) {
+			await db
+				.update(watchlistMovies)
+				.set({ order: i })
+				.where(
+					and(
+						eq(watchlistMovies.watchlistId, watchlist.id),
+						eq(watchlistMovies.movieId, movieIds[i])
+					)
+				);
+		}
+
+		return this.findById(watchlist.id);
+	}
+
+	async updatePriority(
+		userId: number,
+		movieId: number,
+		priority: 'HIGH' | 'MEDIUM' | 'LOW'
+	) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		// Implementation would depend on how you want to handle priority
+		// This is a placeholder that could be enhanced
+		await db
+			.update(watchlistMovies)
+			.set({ priority })
+			.where(
+				and(
+					eq(watchlistMovies.watchlistId, watchlist.id),
+					eq(watchlistMovies.movieId, movieId)
+				)
+			);
+
+		return this.findById(watchlist.id);
+	}
+
+	async bulkUpdateStatus(
+		userId: number,
+		movieIds: number[],
+		status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH'
+	) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		// Update status for all movies in the list
+		await db
+			.update(movies)
+			.set({
+				watchDate: status === 'WATCHED' ? new Date().toISOString() : null,
+			})
+			.where(sql`${movies.id} IN (${movieIds.join(',')})`);
+
+		return this.findById(watchlist.id);
+	}
+
+	async getMoviesByStatus(
+		userId: number,
+		status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH'
+	) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		return db.query.movies.findMany({
+			where:
+				status === 'WATCHED'
+					? sql`${movies.watchDate} IS NOT NULL`
+					: status === 'WATCHING'
+					? sql`${movies.watchDate} IS NULL AND ${movies.id} IN (
+					SELECT ${watchlistMovies.movieId} 
+					FROM ${watchlistMovies} 
+					WHERE ${watchlistMovies.watchlistId} = ${watchlist.id}
+				)`
+					: sql`${movies.watchDate} IS NULL AND ${movies.id} NOT IN (
+					SELECT ${watchlistMovies.movieId} 
+					FROM ${watchlistMovies} 
+					WHERE ${watchlistMovies.watchlistId} = ${watchlist.id}
+				)`,
+		});
+	}
+
+	async getMoviesByYear(userId: number, year: number) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		return db.query.movies.findMany({
+			where: sql`strftime('%Y', ${movies.releaseDate}) = ${year.toString()}`,
+		});
+	}
+
+	async getMoviesByGenre(userId: number, genre: string) {
+		const watchlist = await db.query.watchlists.findFirst({
+			where: and(
+				eq(watchlists.userId, userId),
+				eq(watchlists.name, 'Default Watchlist')
+			),
+		});
+
+		if (!watchlist) {
+			throw new NotFoundError('Default watchlist not found');
+		}
+
+		return db.query.movies.findMany({
+			where: sql`${movies.genres} LIKE ${`%${genre}%`}`,
+		});
+	}
+
+	async getWatchlistByStatus(
+		watchlistId: number,
+		status: 'WATCHED' | 'WATCHING' | 'PLAN_TO_WATCH'
+	) {
+		// Check if watchlist exists
+		await this.findById(watchlistId);
+
+		return db.query.movies.findMany({
+			where:
+				status === 'WATCHED'
+					? sql`${movies.watchDate} IS NOT NULL AND ${movies.id} IN (
+						SELECT ${watchlistMovies.movieId} 
+						FROM ${watchlistMovies} 
+						WHERE ${watchlistMovies.watchlistId} = ${watchlistId}
+					)`
+					: status === 'WATCHING'
+					? sql`${movies.watchDate} IS NULL AND ${movies.id} IN (
+						SELECT ${watchlistMovies.movieId} 
+						FROM ${watchlistMovies} 
+						WHERE ${watchlistMovies.watchlistId} = ${watchlistId}
+					)`
+					: sql`${movies.watchDate} IS NULL AND ${movies.id} NOT IN (
+						SELECT ${watchlistMovies.movieId} 
+						FROM ${watchlistMovies} 
+						WHERE ${watchlistMovies.watchlistId} = ${watchlistId}
+					)`,
+		});
+	}
+
+	async getWatchlistByYear(watchlistId: number, year: number) {
+		// Check if watchlist exists
+		await this.findById(watchlistId);
+
+		return db.query.movies.findMany({
+			where: sql`strftime('%Y', ${
+				movies.releaseDate
+			}) = ${year.toString()} AND ${movies.id} IN (
+				SELECT ${watchlistMovies.movieId} 
+				FROM ${watchlistMovies} 
+				WHERE ${watchlistMovies.watchlistId} = ${watchlistId}
+			)`,
+		});
+	}
+
+	async getWatchlistByGenre(watchlistId: number, genre: string) {
+		// Check if watchlist exists
+		await this.findById(watchlistId);
+
+		return db.query.movies.findMany({
+			where: sql`${movies.genres} LIKE ${`%${genre}%`} AND ${movies.id} IN (
+				SELECT ${watchlistMovies.movieId} 
+				FROM ${watchlistMovies} 
+				WHERE ${watchlistMovies.watchlistId} = ${watchlistId}
+			)`,
+		});
+	}
 }

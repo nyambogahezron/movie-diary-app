@@ -6,6 +6,8 @@ export const users = sqliteTable('users', {
 	email: text('email').notNull().unique(),
 	username: text('username').notNull().unique(),
 	password: text('password').notNull(),
+	name: text('name').notNull(),
+	avatar: text('avatar'),
 	role: text('role', { enum: ['USER', 'ADMIN', 'MODERATOR'] })
 		.notNull()
 		.default('USER'),
@@ -21,6 +23,8 @@ export const users = sqliteTable('users', {
 	passwordResetTokenExpires: text('password_reset_token_expires'),
 	failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
 	lastFailedLogin: text('last_failed_login'),
+	preferences: text('preferences'),
+	notificationSettings: text('notification_settings'),
 	createdAt: text('created_at')
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
@@ -100,6 +104,10 @@ export const watchlistMovies = sqliteTable('watchlist_movies', {
 	movieId: integer('movie_id')
 		.notNull()
 		.references(() => movies.id, { onDelete: 'cascade' }),
+	order: integer('order').notNull().default(0),
+	priority: text('priority', { enum: ['HIGH', 'MEDIUM', 'LOW'] }).default(
+		'MEDIUM'
+	),
 	createdAt: text('created_at')
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),

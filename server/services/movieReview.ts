@@ -129,4 +129,108 @@ export class MovieReviewService {
 
 		return result?.count ?? 0;
 	}
+
+	async getMovieReviewCount(movieId: number) {
+		return this.getReviewCount(movieId);
+	}
+
+	async getMovieRatingDistribution(movieId: number) {
+		const reviews = await this.findByMovieId(movieId, { limit: 1000 });
+		const distribution: Record<number, number> = {};
+
+		// Initialize distribution for ratings 1-5
+		for (let i = 1; i <= 5; i++) {
+			distribution[i] = 0;
+		}
+
+		// Count ratings
+		reviews.forEach((review) => {
+			if (review.rating) {
+				distribution[review.rating] = (distribution[review.rating] || 0) + 1;
+			}
+		});
+
+		return distribution;
+	}
+
+	async getMovieTopReviewers(movieId: number) {
+		const reviews = await db.query.movieReviews.findMany({
+			where: eq(movieReviews.movieId, movieId),
+			with: {
+				user: true,
+			},
+			orderBy: [desc(movieReviews.createdAt)],
+			limit: 10,
+		});
+
+		return reviews.map((review) => ({
+			user: review.user,
+			reviewCount: 1, // This is a simplified version, could be enhanced to count all reviews by user
+			lastReviewDate: review.createdAt,
+		}));
+	}
+
+	async findRecent(limit: number = 10) {
+		return await db.query.movieReviews.findMany({
+			orderBy: [desc(movieReviews.createdAt)],
+			limit,
+			with: {
+				user: true,
+				movie: true,
+			},
+		});
+	}
+
+	async findByUserAndMovie(userId: number, movieId: number) {
+		const review = await db.query.movieReviews.findFirst({
+			where: and(
+				eq(movieReviews.userId, userId),
+				eq(movieReviews.movieId, movieId)
+			),
+		});
+		return review;
+	}
+
+	async findOrCreate(
+		userId: number,
+		movieId: number,
+		input: {
+			content: string;
+			rating?: number;
+			isPublic?: boolean;
+		}
+	) {
+		const existingReview = await this.findByUserAndMovie(userId, movieId);
+		if (existingReview) {
+			return this.update(existingReview.id, input);
+		}
+		return this.create({
+			userId,
+			movieId,
+			...input,
+		});
+	}
+
+	async deleteByMovieId(userId: number, movieId: number) {
+		const [review] = await db
+			.delete(movieReviews)
+			.where(
+				and(eq(movieReviews.userId, userId), eq(movieReviews.movieId, movieId))
+			)
+			.returning();
+
+		if (!review) {
+			throw new NotFoundError('Review not found');
+		}
+
+		return true;
+	}
+
+	async report(reviewId: number, userId: number, reason: string) {
+		// Implementation would depend on your reporting system
+		// This is a placeholder that could be enhanced
+		const review = await this.findById(reviewId);
+		// Add reporting logic here
+		return review;
+	}
 }

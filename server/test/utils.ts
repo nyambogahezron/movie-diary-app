@@ -41,9 +41,16 @@ export async function createTestMovie(movieData = {}, userId: number) {
 		releaseDate: '2023-01-01',
 		overview: 'Test overview',
 		userId,
+		popularity: 5.0,
 	};
 
-	const mergedData = { ...defaultMovieData, ...movieData };
+	// Handle genres correctly - store as JSON string in database
+	let mergedData = { ...defaultMovieData, ...movieData };
+
+	// Convert genres array to string if it exists
+	if (mergedData.genres && Array.isArray(mergedData.genres)) {
+		mergedData.genres = JSON.stringify(mergedData.genres);
+	}
 
 	const insertedMovie = await db
 		.insert(schema.movies)

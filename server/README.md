@@ -1,96 +1,106 @@
-# Movie Diary Backend
+# GraphQL API Migration Guide
 
-A GraphQL API backend for managing movie diaries, built with Node.js, Express, MongoDB, and Apollo Server.
+## Overview
 
-## Features
+The Movie Diary API has been migrated from a REST API to a GraphQL API. This guide will help you understand the changes and how to update your client applications.
 
-- User authentication (register/login)
-- Movie diary management (add, update, delete, list movies)
-- GraphQL API with Apollo Server
-- MongoDB database with Mongoose ODM
-- JWT-based authentication
-- Search and filtering capabilities
-- Pagination support
+## Why GraphQL?
 
-## Prerequisites
+GraphQL provides several advantages over REST:
 
-- Node.js (v14 or higher)
-- MongoDB (v4.4 or higher)
-- npm or yarn
+- Fetch exactly the data you need, no over-fetching or under-fetching
+- Get multiple resources in a single request
+- Strong typing through the GraphQL schema
+- Introspection enables better documentation and tooling
 
-## Setup
+## GraphQL Endpoint
 
-1. Install dependencies:
+The GraphQL API is available at `/graphql`. You can use this endpoint for all operations.
 
-```bash
-npm install
-```
+## GraphQL Playground
 
-2. Create a `.env` file in the root directory with the following variables:
-
-```
-PORT=4000
-MONGODB_URI=mongodb://localhost:27017/movie-diary
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-NODE_ENV=development
-```
-
-3. Start MongoDB service on your machine
-
-4. Start the development server:
-
-```bash
-npm run dev
-```
-
-The server will start at http://localhost:4000 with the GraphQL playground available at http://localhost:4000/graphql
-
-## API Documentation
-
-### Authentication
-
-- `register(input: UserInput!): AuthPayload!`
-- `login(email: String!, password: String!): AuthPayload!`
-
-### Movie Operations
-
-- `addMovie(input: MovieInput!): Movie!`
-- `updateMovie(id: ID!, input: MovieInput!): Movie!`
-- `deleteMovie(id: ID!): Boolean!`
-- `movie(id: ID!): Movie`
-- `movies(limit: Int, offset: Int, search: String, sortBy: String, sortOrder: String): [Movie!]!`
-- `userMovies(userId: ID!, limit: Int, offset: Int): [Movie!]!`
-
-### User Operations
-
-- `me: User`
+You can explore the GraphQL API using the GraphQL Playground, which is available at `/graphql` in your browser when running the server in development mode.
 
 ## Authentication
 
-All movie operations require authentication. Include the JWT token in the Authorization header:
+Authentication works the same way as before, but now you'll receive tokens from GraphQL mutations instead of REST endpoints:
 
+```graphql
+mutation Login {
+	login(email: "user@example.com", password: "password") {
+		token
+		refreshToken
+		user {
+			id
+			username
+			email
+		}
+	}
+}
 ```
-Authorization: Bearer <your-token>
+
+## Common Operations
+
+### Fetching Movies
+
+```graphql
+query GetMovies {
+	movies(limit: 10, offset: 0) {
+		id
+		title
+		overview
+		posterPath
+		releaseDate
+		averageRating
+		isFavorite
+	}
+}
 ```
 
-## Development
+### Getting a Single Movie
 
-- `npm run dev` - Start development server with hot reload
-- `npm start` - Start production server
-- `npm test` - Run tests
+```graphql
+query GetMovie($id: ID!) {
+	movie(id: $id) {
+		id
+		title
+		overview
+		posterPath
+		releaseDate
+		averageRating
+		isFavorite
+		reviews {
+			id
+			rating
+			review
+			user {
+				username
+			}
+		}
+	}
+}
+```
 
-## Security
+### Creating a Movie Review
 
-- Passwords are hashed using bcrypt
-- JWT tokens are used for authentication
-- Input validation is implemented
-- MongoDB queries are sanitized
+```graphql
+mutation CreateReview($input: CreateReviewInput!) {
+	createReview(input: $input) {
+		id
+		rating
+		review
+		movie {
+			id
+			title
+		}
+	}
+}
+```
 
-## Error Handling
+## Migration Timeline
 
-The API uses standard GraphQL error handling. All errors are returned in the standard GraphQL error format with appropriate error messages.
+The REST API is now deprecated but will continue to function for some time to allow for a smooth transition. We recommend migrating to the GraphQL API as soon as possible.
 
-# Test
+## Need Help?
 
-// bun run test -- -t "AuthController" # Run only AuthController tests
-// bun run test -- --coverage # Run tests with coverage report
+If you have any questions about migrating to the GraphQL API, please contact the development team.

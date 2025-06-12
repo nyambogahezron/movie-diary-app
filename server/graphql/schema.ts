@@ -60,6 +60,7 @@ export const typeDefs = gql`
 		reviews: [MovieReview!]!
 		watchlists: [Watchlist!]!
 		favorites: [Favorite!]!
+		posts: [Post!]!
 	}
 
 	type Query {
@@ -114,6 +115,13 @@ export const typeDefs = gql`
 		reviewStats(movieId: ID!): ReviewStats! @auth
 		topReviewedMovies(limit: Int = 10): [Movie!]! @auth
 		recentReviews(limit: Int = 10): [MovieReview!]! @auth
+
+		# Post queries
+		post(id: ID!): Post
+		posts(userId: ID, limit: Int, offset: Int): [Post!]!
+		userPosts(userId: ID!, limit: Int, offset: Int): [Post!]!
+		postComments(postId: ID!, limit: Int, offset: Int): [PostComment!]!
+		isPostLiked(postId: ID!): Boolean! @auth
 	}
 
 	type Mutation {
@@ -195,6 +203,17 @@ export const typeDefs = gql`
 		updateUserPreferences(preferences: UserPreferencesInput!): User! @auth
 		updateNotificationSettings(settings: NotificationSettingsInput!): User!
 			@auth
+
+		# Post mutations
+		createPost(input: CreatePostInput!): Post! @auth
+		updatePost(id: ID!, input: UpdatePostInput!): Post! @auth
+		deletePost(id: ID!): Boolean! @auth
+		likePost(postId: ID!): PostLike! @auth
+		unlikePost(postId: ID!): Boolean! @auth
+		createPostComment(input: CreatePostCommentInput!): PostComment! @auth
+		updatePostComment(id: ID!, input: UpdatePostCommentInput!): PostComment!
+			@auth
+		deletePostComment(id: ID!): Boolean! @auth
 	}
 
 	type Movie {
@@ -242,6 +261,40 @@ export const typeDefs = gql`
 		createdAt: String!
 		movie: Movie!
 		user: User!
+	}
+
+	type Post {
+		id: ID!
+		userId: ID!
+		title: String!
+		content: String!
+		createdAt: String!
+		updatedAt: String!
+		user: User!
+		likes: [PostLike!]!
+		comments: [PostComment!]!
+		likeCount: Int!
+		commentCount: Int!
+	}
+
+	type PostLike {
+		id: ID!
+		postId: ID!
+		userId: ID!
+		createdAt: String!
+		user: User!
+		post: Post!
+	}
+
+	type PostComment {
+		id: ID!
+		postId: ID!
+		userId: ID!
+		content: String!
+		createdAt: String!
+		updatedAt: String!
+		user: User!
+		post: Post!
 	}
 
 	input CreateMovieInput {
@@ -321,6 +374,25 @@ export const typeDefs = gql`
 		reviewNotifications: Boolean
 		watchlistNotifications: Boolean
 		systemNotifications: Boolean
+	}
+
+	input CreatePostInput {
+		title: String!
+		content: String!
+	}
+
+	input UpdatePostInput {
+		title: String
+		content: String
+	}
+
+	input CreatePostCommentInput {
+		postId: ID!
+		content: String!
+	}
+
+	input UpdatePostCommentInput {
+		content: String!
 	}
 `;
 
