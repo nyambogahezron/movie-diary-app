@@ -129,6 +129,7 @@ export default function SocialScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		paddingTop: 35,
 		backgroundColor: Colors.neutral[950],
 	},
 	tabBar: {

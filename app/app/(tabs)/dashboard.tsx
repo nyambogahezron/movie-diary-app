@@ -126,6 +126,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
+		paddingVertical: 35,
 		backgroundColor: Colors.neutral[950],
 	},
 	statsContainer: {

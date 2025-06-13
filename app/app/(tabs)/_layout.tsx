@@ -1,39 +1,30 @@
-import Colors from '@/constants/Colors';
+import { useTheme } from '@/context/ThemeContext';
 import { Tabs } from 'expo-router';
 import { BarChart3, LibraryBig, Tv, User, Users } from 'lucide-react-native';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 export default function TabLayout() {
+	const { colors } = useTheme();
+
 	return (
-		<View style={styles.container}>
+		<View style={[styles.container, { backgroundColor: colors.neutral[950] }]}>
 			<Tabs
 				screenOptions={{
-					tabBarActiveTintColor: Colors.primary[500],
-					tabBarInactiveTintColor: Colors.neutral[400],
-					tabBarStyle: styles.tabBar,
+					headerShown: false,
+					tabBarActiveTintColor: colors.primary[500],
+					tabBarInactiveTintColor: colors.neutral[400],
+					tabBarStyle: [
+						styles.tabBar,
+						{ backgroundColor: colors.neutral[900] },
+					],
 					tabBarLabelStyle: styles.tabBarLabel,
-					headerStyle: {
-						backgroundColor: Colors.neutral[950],
-						borderBottomWidth: 1,
-						borderBottomColor: Colors.neutral[800],
-						height: Platform.OS === 'ios' ? 100 : 80,
-					},
-					headerTitleContainerStyle: {
-						paddingHorizontal: 16,
-						paddingBottom: 16,
-					},
-					headerTitleStyle: {
-						fontFamily: 'Inter-Bold',
-						fontSize: 28,
-						color: Colors.neutral[50],
-					},
 				}}
 			>
 				<Tabs.Screen
 					name='index'
 					options={{
 						title: 'Discover',
-						tabBarIcon: ({ size, color }) => <Tv size={size} color={color} />,
+						tabBarIcon: ({ size, color }) => <Tv size={22} color={color} />,
 					}}
 				/>
 				<Tabs.Screen
@@ -41,7 +32,7 @@ export default function TabLayout() {
 					options={{
 						title: 'Dashboard',
 						tabBarIcon: ({ size, color }) => (
-							<BarChart3 size={size} color={color} />
+							<BarChart3 size={22} color={color} />
 						),
 					}}
 				/>
@@ -50,7 +41,7 @@ export default function TabLayout() {
 					options={{
 						title: 'Library',
 						tabBarIcon: ({ size, color }) => (
-							<LibraryBig size={size} color={color} />
+							<LibraryBig size={22} color={color} />
 						),
 					}}
 				/>
@@ -58,9 +49,7 @@ export default function TabLayout() {
 					name='social'
 					options={{
 						title: 'Social',
-						tabBarIcon: ({ size, color }) => (
-							<Users size={size} color={color} />
-						),
+						tabBarIcon: ({ size, color }) => <Users size={22} color={color} />,
 					}}
 				/>
 				<Tabs.Screen
@@ -68,7 +57,7 @@ export default function TabLayout() {
 					options={{
 						title: 'Profile',
 						headerShown: false,
-						tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+						tabBarIcon: ({ size, color }) => <User size={22} color={color} />,
 					}}
 				/>
 			</Tabs>
@@ -79,10 +68,8 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: Colors.neutral[950],
 	},
 	tabBar: {
-		backgroundColor: Colors.neutral[900],
 		borderTopWidth: 0,
 		paddingTop: 10,
 		paddingBottom: 50,

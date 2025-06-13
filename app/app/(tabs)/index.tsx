@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
 	},
 	scrollContent: {
 		padding: 16,
-		paddingTop: 16,
+		paddingTop: 45,
 		paddingBottom: 32,
 	},
 	section: {
