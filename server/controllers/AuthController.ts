@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import AsyncHandler from '../middleware/asyncHandler';
-import { BadRequestError } from '@/errors';
+import { BadRequestError } from '../errors';
 
 export class AuthController {
 	static register = AsyncHandler(

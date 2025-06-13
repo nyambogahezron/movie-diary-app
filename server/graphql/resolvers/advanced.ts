@@ -1,4 +1,4 @@
-import { BadRequestError, UnauthorizedError } from '@/errors';
+import { BadRequestError, UnauthorizedError } from '../../errors';
 import { GraphQLContext } from '../context';
 
 export const advancedResolvers = {

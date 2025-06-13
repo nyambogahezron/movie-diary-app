@@ -1,17 +1,12 @@
 import { IResolvers } from '@graphql-tools/utils';
 import { GraphQLContext } from './context';
 import { AuthenticationError } from 'apollo-server-express';
-
-// Import services
 import { PostService } from '../services/PostService';
 import { PostLikeService } from '../services/PostLikeService';
 import { PostCommentService } from '../services/PostCommentService';
 import { PostComment as PostCommentHelper } from '../helpers/PostComment';
-
-// Import the modular resolvers
 import modulerResolvers from './resolvers/index';
 
-// Define inline resolvers for direct usage
 const inlineResolvers: IResolvers = {
 	Query: {
 		// User queries
