@@ -32,6 +32,12 @@
     },
     "android": {
       "package": "com.hezron.moviediary"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1619542d-b024-4f3e-8b0f-9ca168e37081"
     }
   }
 }
