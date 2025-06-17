@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { WatchlistService } from '../services/WatchlistService';
 import { SearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { BadRequestError } from '../errors';
+import { BadRequestError } from '../utils/errors';
 
 export class WatchlistController {
 	static createWatchlist = AsyncHandler(

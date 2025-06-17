@@ -1,6 +1,6 @@
 import { Post as PostHelper } from '../helpers/Post';
 import { Post as PostType, PostInput, PostSearchInput } from '../types';
-import { NotFoundError, UnauthorizedError } from '../errors';
+import { NotFoundError, UnauthorizedError } from '../utils/errors';
 
 export class PostService {
 	/**

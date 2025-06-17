@@ -1,4 +1,4 @@
-import { BadRequestError, NotFoundError } from '../errors';
+import { BadRequestError, NotFoundError } from '../utils/errors';
 import { Favorite } from '../helpers/Favorite';
 import { Movie } from '../helpers/Movie';
 import {

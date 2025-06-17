@@ -4,7 +4,7 @@ import { PostLikeService } from '../services/PostLikeService';
 import { PostCommentService } from '../services/PostCommentService';
 import { PostInput, PostCommentInput, PostSearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { BadRequestError } from '../errors';
+import { BadRequestError } from '../utils/errors';
 export class PostController {
 	/**
 	 * Create a new post

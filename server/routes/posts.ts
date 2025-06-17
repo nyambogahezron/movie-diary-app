@@ -10,7 +10,7 @@ import {
 	validateCommentUpdate,
 	validateCommentIdParam,
 	validatePostQuery,
-} from '../validations/post.validation';
+} from '../utils/validations/post.validation';
 
 const router = express.Router();
 

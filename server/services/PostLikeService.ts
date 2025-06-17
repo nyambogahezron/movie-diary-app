@@ -1,7 +1,7 @@
 import { PostLike as PostLikeHelper } from '../helpers/PostLike';
 import { Post as PostHelper } from '../helpers/Post';
 import { PostLike as PostLikeType } from '../types';
-import { NotFoundError, BadRequestError } from '../errors';
+import { NotFoundError, BadRequestError } from '../utils/errors';
 
 export class PostLikeService {
 	static async likePost(userId: number, postId: number): Promise<PostLikeType> {

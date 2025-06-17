@@ -7,7 +7,11 @@ import {
 	User,
 	SearchInput,
 } from '../types';
-import { UnauthorizedError, NotFoundError, BadRequestError } from '../errors';
+import {
+	UnauthorizedError,
+	NotFoundError,
+	BadRequestError,
+} from '../utils/errors';
 
 export class WatchlistService {
 	static async createWatchlist(

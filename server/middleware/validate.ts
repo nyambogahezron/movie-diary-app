@@ -1,4 +1,4 @@
-import CustomError from '../errors';
+import CustomError from '../utils/errors';
 import { Request, Response, NextFunction } from 'express';
 import { validationResult, ValidationChain } from 'express-validator';
 

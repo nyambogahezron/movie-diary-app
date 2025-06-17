@@ -3,7 +3,7 @@ import { MovieService } from '../services/MovieService';
 import { FavoriteService } from '../services/FavoriteService';
 import { SearchInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { BadRequestError } from '../errors';
+import { BadRequestError } from '../utils/errors';
 
 export class MovieController {
 	static addMovie = AsyncHandler(

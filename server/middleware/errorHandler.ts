@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import CustomError from '../errors';
+import CustomError from '../utils/errors';
 import { NextFunction, Request, Response } from 'express';
 
 export default function ErrorHandlerMiddleware(

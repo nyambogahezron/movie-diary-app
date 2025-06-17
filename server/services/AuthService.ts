@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { BadRequestError, UnauthorizedError } from './../errors';
+import { BadRequestError, UnauthorizedError } from '../utils/errors';
 import { EmailService } from './EmailService';
 
 dotenv.config();

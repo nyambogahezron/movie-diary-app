@@ -1,7 +1,7 @@
 import { PostComment as PostCommentHelper } from '../helpers/PostComment';
 import { Post as PostHelper } from '../helpers/Post';
 import { PostComment as PostCommentType, PostCommentInput } from '../types';
-import { NotFoundError, UnauthorizedError } from '../errors';
+import { NotFoundError, UnauthorizedError } from '../utils/errors';
 
 export class PostCommentService {
 	static async createComment(

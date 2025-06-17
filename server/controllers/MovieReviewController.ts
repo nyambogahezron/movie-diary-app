@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { MovieReviewService } from '../services/MovieReviewService';
 import { MovieReviewInput } from '../types';
 import AsyncHandler from '../middleware/asyncHandler';
-import { BadRequestError } from '../errors';
+import { BadRequestError } from '../utils/errors';
 
 export class MovieReviewController {
 	static addReview = AsyncHandler(
