@@ -19,4 +19,32 @@ router.post(
 	AuthController.refreshToken
 );
 
+// Email verification routes
+router.get('/verify-email', AuthController.verifyEmail);
+router.post(
+	'/resend-verification',
+	authMiddleware,
+	AuthController.resendVerificationEmail
+);
+
+// Password reset routes
+router.post(
+	'/request-password-reset',
+	validate(authValidation.requestPasswordReset),
+	AuthController.requestPasswordReset
+);
+router.post(
+	'/reset-password',
+	validate(authValidation.resetPassword),
+	AuthController.resetPassword
+);
+
+// Email update route
+router.post(
+	'/update-email',
+	authMiddleware,
+	validate(authValidation.updateEmail),
+	AuthController.updateEmail
+);
+
 export default router;

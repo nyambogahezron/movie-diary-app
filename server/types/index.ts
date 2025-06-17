@@ -6,6 +6,13 @@ export interface User {
 	password: string;
 	avatar?: string | null;
 	role?: string;
+	isEmailVerified: boolean;
+	emailVerificationToken?: string | null;
+	emailVerificationExpires?: string | null;
+	passwordResetToken?: string | null;
+	passwordResetExpires?: string | null;
+	lastLoginAt?: string | null;
+	lastLoginIp?: string | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -17,6 +24,13 @@ export interface IUser {
 	password: string;
 	avatar?: string | null;
 	role?: string;
+	isEmailVerified: boolean;
+	emailVerificationToken?: string | null;
+	emailVerificationExpires?: string | null;
+	passwordResetToken?: string | null;
+	passwordResetExpires?: string | null;
+	lastLoginAt?: string | null;
+	lastLoginIp?: string | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -122,6 +136,7 @@ export interface AuthPayload {
 
 export interface JwtPayload {
 	userId: number;
+	deviceInfo?: string;
 	iat?: number;
 	exp?: number;
 }

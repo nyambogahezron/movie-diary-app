@@ -1,9 +1,13 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 export default function NodemailerConfig() {
 	return {
-		service: 'gmail',
+		service: process.env.EMAIL_SERVICE!,
 		auth: {
-			user: process.env.email,
-			pass: process.env.pass,
+			user: process.env.SMTP_USER!,
+			pass: process.env.SMTP_PASSWORD!,
 		},
 	};
 }

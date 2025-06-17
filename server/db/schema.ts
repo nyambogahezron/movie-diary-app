@@ -1,20 +1,43 @@
 import { sql } from 'drizzle-orm';
-import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import {
+	text,
+	integer,
+	sqliteTable,
+	uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
-export const users = sqliteTable('users', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	name: text('name').notNull(),
-	username: text('username').notNull().unique(),
-	email: text('email').notNull().unique(),
-	password: text('password').notNull(),
-	avatar: text('avatar'),
-	createdAt: text('created_at')
-		.default(sql`CURRENT_TIMESTAMP`)
-		.notNull(),
-	updatedAt: text('updated_at')
-		.default(sql`CURRENT_TIMESTAMP`)
-		.notNull(),
-});
+export const users = sqliteTable(
+	'users',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		name: text('name').notNull(),
+		username: text('username'),
+		email: text('email'),
+		password: text('password').notNull(),
+		avatar: text('avatar'),
+		isEmailVerified: integer('is_email_verified', { mode: 'boolean' })
+			.default(false)
+			.notNull(),
+		emailVerificationToken: text('email_verification_token'),
+		emailVerificationExpires: text('email_verification_expires'),
+		passwordResetToken: text('password_reset_token'),
+		passwordResetExpires: text('password_reset_expires'),
+		lastLoginAt: text('last_login_at'),
+		lastLoginIp: text('last_login_ip'),
+		createdAt: text('created_at')
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: text('updated_at')
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+	},
+	(table) => {
+		return [
+			uniqueIndex('users_username_unique').on(table.username),
+			uniqueIndex('users_email_unique').on(table.email),
+		];
+	}
+);
 
 export const movies = sqliteTable('movies', {
 	id: integer('id').primaryKey({ autoIncrement: true }),

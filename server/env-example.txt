@@ -20,3 +20,8 @@ RATE_LIMIT_MAX=100
 
 # Database configuration
 DATABASE_URL=your_database_url_here
+
+# Email configuration
+EMAIL=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password_here
+EMAIL_SERVICE=gmail

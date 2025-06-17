@@ -25,6 +25,20 @@ export const authMiddleware = async (
 
 		try {
 			const user = await AuthService.verifyToken(accessToken);
+
+			// Check if email is verified (except for verification routes)
+			const isVerificationRoute =
+				req.originalUrl.includes('/verify-email') ||
+				req.originalUrl.includes('/resend-verification');
+
+			if (!user.isEmailVerified && !isVerificationRoute) {
+				res.status(403).json({
+					error: 'Email not verified',
+					code: 'EMAIL_NOT_VERIFIED',
+				});
+				return;
+			}
+
 			req.user = user;
 			next();
 		} catch (error: any) {
