@@ -11,7 +11,7 @@ export class EmailService {
 	private static readonly clientUrl = process.env.CLIENT_URL!;
 
 	static async sendVerificationEmail(user: User, token: string): Promise<void> {
-		const verificationLink = `${this.clientUrl}/verify-email?token=${token}`;
+		const verificationLink = `${this.clientUrl}/api/v1/auth/verify-email?token=${token}`;
 
 		const mailOptions = {
 			from: this.fromEmail,
@@ -22,15 +22,14 @@ export class EmailService {
                     <h2 style="color: #333;">Welcome to Movie Diary!</h2>
                     <p>Hi ${user.name},</p>
                     <p>Thank you for signing up. Please verify your email address by clicking the button below:</p>
-                    <p style="text-align: center;">
+                    <p style="text-align: center; margin: 20px 0;">
                         <a href="${verificationLink}" 
                            style="background-color: #3498db; color: white; padding: 10px 20px; 
                                   text-decoration: none; border-radius: 5px; display: inline-block;">
                            Verify Email Address
                         </a>
                     </p>
-                    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-                    <p>${verificationLink}</p>
+                   
                     <p>This link will expire in 24 hours.</p>
                     <p>If you did not create an account, please ignore this email.</p>
                     <p>Thank you,<br>The Movie Diary Team</p>
@@ -98,9 +97,9 @@ export class EmailService {
 
 	static async sendPasswordResetEmail(
 		user: User,
-		token: string
+		resetCode: string
 	): Promise<void> {
-		const resetLink = `${this.clientUrl}/reset-password?token=${token}`;
+		const resetLink = `${this.clientUrl}/reset-password`;
 
 		const mailOptions = {
 			from: this.fromEmail,
@@ -110,17 +109,15 @@ export class EmailService {
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #333;">Reset Your Password</h2>
                     <p>Hi ${user.name},</p>
-                    <p>You recently requested to reset your password for your Movie Diary account. Click the button below to reset it:</p>
-                    <p style="text-align: center;">
-                        <a href="${resetLink}" 
-                           style="background-color: #3498db; color: white; padding: 10px 20px; 
-                                  text-decoration: none; border-radius: 5px; display: inline-block;">
-                           Reset Your Password
-                        </a>
-                    </p>
-                    <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
-                    <p>${resetLink}</p>
-                    <p>This link will expire in 1 hour.</p>
+                    <p>You recently requested to reset your password for your Movie Diary account.</p>
+                    <p>Your 6-digit reset code is:</p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <div style="font-size: 32px; letter-spacing: 5px; font-weight: bold; background-color: #f8f8f8; padding: 15px; border-radius: 5px; display: inline-block; border: 1px solid #ddd;">
+                            ${resetCode}
+                        </div>
+                    </div>
+                    <p>Enter this code along with your email and new password on our <a href="${resetLink}">password reset page</a>.</p>
+                    <p>This code will expire in 1 hour.</p>
                     <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
                     <p>Thank you,<br>The Movie Diary Team</p>
                 </div>
@@ -168,6 +165,18 @@ export class EmailService {
                     <p>Thank you,<br>The Movie Diary Team</p>
                 </div>
             `,
+		};
+
+		await this.transporter.sendMail(mailOptions);
+	}
+
+	//email send test
+	static async sendTestEmail(to: string): Promise<void> {
+		const mailOptions = {
+			from: this.fromEmail,
+			to: to,
+			subject: 'Test Email from Movie Diary',
+			text: 'This is a test email from Movie Diary. If you received this, the email service is working correctly.',
 		};
 
 		await this.transporter.sendMail(mailOptions);

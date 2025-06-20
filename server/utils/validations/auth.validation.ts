@@ -41,11 +41,26 @@ export const authValidation = {
 
 	login: [
 		body('email')
-			.notEmpty()
-			.withMessage('Email is required')
+			.optional({ nullable: true })
 			.isEmail()
 			.withMessage('Must provide a valid email address')
 			.normalizeEmail(),
+
+		body('username')
+			.optional({ nullable: true })
+			.isLength({ min: 3, max: 30 })
+			.withMessage('Username must be between 3 and 30 characters')
+			.matches(/^[a-zA-Z0-9_]+$/)
+			.withMessage('Username can only contain letters, numbers and underscores')
+			.trim(),
+
+		// Custom validation to ensure either email or username is provided
+		body().custom((body) => {
+			if (!body.email && !body.username) {
+				throw new Error('Either email or username must be provided');
+			}
+			return true;
+		}),
 
 		body('password').notEmpty().withMessage('Password is required'),
 	],
@@ -64,7 +79,20 @@ export const authValidation = {
 	],
 
 	resetPassword: [
-		body('token').notEmpty().withMessage('Token is required'),
+		body('code')
+			.notEmpty()
+			.withMessage('Reset code is required')
+			.isLength({ min: 6, max: 6 })
+			.withMessage('Reset code must be exactly 6 digits')
+			.isNumeric()
+			.withMessage('Reset code must contain only numbers'),
+
+		body('email')
+			.notEmpty()
+			.withMessage('Email is required')
+			.isEmail()
+			.withMessage('Must provide a valid email address')
+			.normalizeEmail(),
 
 		body('newPassword')
 			.notEmpty()

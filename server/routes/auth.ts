@@ -19,7 +19,6 @@ router.post(
 	AuthController.refreshToken
 );
 
-// Email verification routes
 router.get('/verify-email', AuthController.verifyEmail);
 router.post(
 	'/resend-verification',
@@ -27,7 +26,6 @@ router.post(
 	AuthController.resendVerificationEmail
 );
 
-// Password reset routes
 router.post(
 	'/request-password-reset',
 	validate(authValidation.requestPasswordReset),
@@ -39,7 +37,6 @@ router.post(
 	AuthController.resetPassword
 );
 
-// Email update route
 router.post(
 	'/update-email',
 	authMiddleware,

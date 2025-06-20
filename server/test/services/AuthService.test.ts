@@ -185,4 +185,234 @@ describe('AuthService', () => {
 			expect(user).toBeNull();
 		});
 	});
+
+	describe('requestPasswordReset', () => {
+		it('should generate a 6-digit reset code and store its hash in the database', async () => {
+			// Create a test user
+			const userData = {
+				name: 'Reset User',
+				username: 'resetuser',
+				email: 'reset@example.com',
+				password: 'Password123!',
+			};
+
+			await AuthService.register(
+				userData.name,
+				userData.username,
+				userData.email,
+				userData.password
+			);
+
+			// Mock the code generation to return a predictable value
+			jest
+				.spyOn(require('../../utils/signedTokens').default, 'generateResetCode')
+				.mockImplementation(() => '123456');
+
+			// Spy on EmailService
+			const emailServiceSpy = jest
+				.spyOn(
+					require('../../services/EmailService').EmailService,
+					'sendPasswordResetEmail'
+				)
+				.mockImplementation(() => Promise.resolve());
+
+			// Request password reset
+			await AuthService.requestPasswordReset(userData.email);
+
+			// Check if user has reset token
+			const users = await db
+				.select()
+				.from(schema.users)
+				.where(eq(schema.users.email, userData.email));
+
+			const user = users[0];
+
+			// Verify that reset token was set
+			expect(user.passwordResetToken).toBeTruthy();
+			expect(user.passwordResetExpires).toBeTruthy();
+
+			// Verify token format - should be a hash containing userId and timestamp
+			expect(user.passwordResetToken).not.toBeNull();
+			const tokenParts = (user.passwordResetToken as string).split('.');
+			expect(tokenParts.length).toBe(3); // userId.timestamp.hash
+
+			// Verify email was sent with the 6-digit code
+			expect(emailServiceSpy).toHaveBeenCalledWith(
+				expect.objectContaining({ email: userData.email }),
+				'123456'
+			);
+
+			// Clean up mocks
+			jest.restoreAllMocks();
+		});
+
+		it('should throw an error when user is not found', async () => {
+			await expect(
+				AuthService.requestPasswordReset('nonexistent@example.com')
+			).rejects.toThrow('User not found');
+		});
+	});
+
+	describe('resetPassword', () => {
+		it('should verify code and reset password', async () => {
+			// Create a test user
+			const userData = {
+				name: 'Reset User',
+				username: 'resetuser',
+				email: 'reset@example.com',
+				password: 'Password123!',
+			};
+
+			await AuthService.register(
+				userData.name,
+				userData.username,
+				userData.email,
+				userData.password
+			);
+
+			// Mock code generation
+			jest
+				.spyOn(require('../../utils/signedTokens').default, 'generateResetCode')
+				.mockImplementation(() => '123456');
+
+			// Mock email service
+			jest
+				.spyOn(
+					require('../../services/EmailService').EmailService,
+					'sendPasswordResetEmail'
+				)
+				.mockImplementation(() => Promise.resolve());
+			jest
+				.spyOn(
+					require('../../services/EmailService').EmailService,
+					'sendPasswordChangeNotification'
+				)
+				.mockImplementation(() => Promise.resolve());
+
+			// Request password reset
+			await AuthService.requestPasswordReset(userData.email);
+
+			// Reset password with the 6-digit code
+			const newPassword = 'NewPassword123!';
+			await AuthService.resetPassword('123456', userData.email, newPassword);
+
+			// Verify password was changed
+			const updatedUsers = await db
+				.select()
+				.from(schema.users)
+				.where(eq(schema.users.email, userData.email));
+
+			const updatedUser = updatedUsers[0];
+
+			// Reset token should be cleared
+			expect(updatedUser.passwordResetToken).toBeNull();
+			expect(updatedUser.passwordResetExpires).toBeNull();
+
+			// Password should be changed
+			const passwordMatch = await bcrypt.compare(
+				newPassword,
+				updatedUser.password
+			);
+			expect(passwordMatch).toBe(true);
+
+			// Clean up mocks
+			jest.restoreAllMocks();
+		});
+
+		it('should reject invalid reset codes', async () => {
+			// Create a test user
+			const userData = {
+				name: 'Reset User',
+				username: 'resetuser',
+				email: 'reset@example.com',
+				password: 'Password123!',
+			};
+
+			await AuthService.register(
+				userData.name,
+				userData.username,
+				userData.email,
+				userData.password
+			);
+
+			// Mock code generation
+			jest
+				.spyOn(require('../../utils/signedTokens').default, 'generateResetCode')
+				.mockImplementation(() => '123456');
+
+			// Mock email service
+			jest
+				.spyOn(
+					require('../../services/EmailService').EmailService,
+					'sendPasswordResetEmail'
+				)
+				.mockImplementation(() => Promise.resolve());
+
+			// Request password reset
+			await AuthService.requestPasswordReset(userData.email);
+
+			// Try to reset with invalid code
+			await expect(
+				AuthService.resetPassword('654321', userData.email, 'NewPassword123!')
+			).rejects.toThrow('Invalid reset code');
+
+			// Clean up mocks
+			jest.restoreAllMocks();
+		});
+
+		it('should be able to verify reset code without requiring a token in URL', async () => {
+			// Create a test user
+			const userData = {
+				name: 'Reset User',
+				username: 'resetuser',
+				email: 'reset@example.com',
+				password: 'Password123!',
+			};
+
+			await AuthService.register(
+				userData.name,
+				userData.username,
+				userData.email,
+				userData.password
+			);
+
+			// Mock code generation
+			jest
+				.spyOn(require('../../utils/signedTokens').default, 'generateResetCode')
+				.mockImplementation(() => '123456');
+
+			// Mock email service
+			jest
+				.spyOn(
+					require('../../services/EmailService').EmailService,
+					'sendPasswordResetEmail'
+				)
+				.mockImplementation(() => Promise.resolve());
+
+			// Request password reset
+			await AuthService.requestPasswordReset(userData.email);
+
+			// Get the stored hash from the database
+			const users = await db
+				.select()
+				.from(schema.users)
+				.where(eq(schema.users.email, userData.email));
+
+			const user = users[0];
+			const storedHash = user.passwordResetToken;
+			expect(storedHash).not.toBeNull();
+
+			// Import Token directly for testing
+			const Token = require('../../utils/signedTokens').default;
+
+			// Verify the reset code against the stored hash
+			const isValid = Token.verifyResetCode('123456', storedHash as string);
+
+			// Check verification results
+			expect(isValid).toBe(true);
+
+			// Clean up mocks
+			jest.restoreAllMocks();
+		});
+	});
 });

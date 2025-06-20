@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../helpers/User';
-import { AuthPayload, JwtPayload, User as UserType } from '../types';
-import dotenv from 'dotenv';
+import { JwtPayload, User as UserType } from '../types';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { db } from '../db';
@@ -9,14 +8,15 @@ import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
 import { EmailService } from './EmailService';
-
-dotenv.config();
+import Token from '../utils/signedTokens';
 
 export class AuthService {
 	private static readonly JWT_SECRET = process.env.JWT_SECRET!;
 	private static readonly JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 	private static readonly ACCESS_TOKEN_EXPIRY = '15m';
 	private static readonly REFRESH_TOKEN_EXPIRY = '7d';
+	private static readonly RESET_TOKEN_SECRET =
+		process.env.RESET_TOKEN_SECRET || process.env.JWT_SECRET!;
 
 	static async register(
 		name: string,
@@ -52,9 +52,7 @@ export class AuthService {
 
 		await EmailService.sendWelcomeEmail(user);
 
-		const { accessToken, refreshToken } = this.generateTokens(user);
-
-		return { token: accessToken, refreshToken, user };
+		return { user };
 	}
 
 	static async login(
@@ -62,7 +60,7 @@ export class AuthService {
 		password: string,
 		ipAddress?: string,
 		deviceInfo?: string
-	): Promise<AuthPayload> {
+	) {
 		const user = await User.findUser(identifier);
 
 		if (!user) {
@@ -70,6 +68,7 @@ export class AuthService {
 		}
 
 		const isPasswordValid = await User.comparePassword(user.password, password);
+
 		if (!isPasswordValid) {
 			throw new BadRequestError('Invalid credentials');
 		}
@@ -89,7 +88,6 @@ export class AuthService {
 			);
 		}
 
-		// Update last login information
 		await User.updateLoginInfo(
 			user.id,
 			ipAddress || null,
@@ -161,50 +159,59 @@ export class AuthService {
 		return user;
 	}
 
-	static async requestPasswordReset(email: string): Promise<void> {
+	static async requestPasswordReset(email: string) {
 		const user = await User.findByEmail(email);
 
 		if (!user) {
-			// For security reasons, we don't want to indicate if the email exists or not
-			return;
+			throw new BadRequestError('User not found');
 		}
 
-		const resetToken = crypto.randomBytes(32).toString('hex');
+		// Generate a 6-digit reset code
+		const resetCode = Token.generateResetCode();
+		// Hash the reset code for storage
+		const hashedResetToken = Token.hashResetCode(resetCode, user.id);
 		const resetExpires = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
 		await db
 			.update(users)
 			.set({
-				passwordResetToken: resetToken,
+				passwordResetToken: hashedResetToken,
 				passwordResetExpires: resetExpires,
 				updatedAt: new Date().toISOString(),
 			})
 			.where(eq(users.id, user.id));
 
-		await EmailService.sendPasswordResetEmail(user, resetToken);
+		// Send the plain text code to the user's email
+		await EmailService.sendPasswordResetEmail(user, resetCode);
+
+		return;
 	}
 
-	static async resetPassword(
-		token: string,
-		newPassword: string
-	): Promise<void> {
-		const result = await db
-			.select()
-			.from(users)
-			.where(eq(users.passwordResetToken, token));
+	static async resetPassword(code: string, email: string, newPassword: string) {
+		// First find user by email
+		const user = await User.findByEmail(email);
 
-		if (result.length === 0) {
-			throw new BadRequestError('Invalid or expired reset token');
+		if (!user) {
+			throw new BadRequestError('User not found');
 		}
 
-		const user = result[0] as unknown as UserType;
+		// Check if user has a reset token
+		if (!user.passwordResetToken) {
+			throw new BadRequestError('No reset code requested');
+		}
 
-		// Check if token is expired
+		// Check if reset code has expired based on passwordResetExpires field
 		if (
 			user.passwordResetExpires &&
 			new Date(user.passwordResetExpires) < new Date()
 		) {
-			throw new BadRequestError('Reset token has expired');
+			throw new BadRequestError('Reset code has expired');
+		}
+
+		// Verify the reset code against stored hash
+		const isValidCode = Token.verifyResetCode(code, user.passwordResetToken);
+		if (!isValidCode) {
+			throw new BadRequestError('Invalid reset code');
 		}
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -222,7 +229,7 @@ export class AuthService {
 		await EmailService.sendPasswordChangeNotification(user);
 	}
 
-	static async updateEmail(userId: number, newEmail: string): Promise<void> {
+	static async updateEmail(userId: number, newEmail: string) {
 		const existingUser = await User.findByEmail(newEmail);
 
 		if (existingUser) {

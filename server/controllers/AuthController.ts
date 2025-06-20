@@ -19,7 +19,6 @@ export class AuthController {
 			return;
 		}
 
-		// Get IP address from request
 		const ipAddress =
 			req.ip || (req.headers['x-forwarded-for'] as string) || '';
 
@@ -31,7 +30,36 @@ export class AuthController {
 			ipAddress
 		);
 
-		// Set access token cookie
+		res.status(201).json({
+			message: 'User registered successfully',
+			user: {
+				name: authPayload.user.name,
+				username: authPayload.user.username,
+				email: authPayload.user.email,
+			},
+		});
+	});
+
+	static login = AsyncHandler(async (req: Request, res: Response) => {
+		const { username, email, password } = req.body;
+
+		const loginIdentifier = username || email;
+
+		if (!loginIdentifier || !password) {
+			throw new BadRequestError('Invalid Credentials');
+		}
+
+		const ipAddress =
+			req.ip || (req.headers['x-forwarded-for'] as string) || '';
+		const userAgent = req.headers['user-agent'] || '';
+
+		const authPayload = await AuthService.login(
+			loginIdentifier,
+			password,
+			ipAddress,
+			userAgent
+		);
+
 		res.cookie('accessToken', authPayload.token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === 'production',
@@ -39,7 +67,6 @@ export class AuthController {
 			maxAge: 15 * 60 * 1000, // 15 minutes
 		});
 
-		// Set refresh token cookie
 		if (authPayload.refreshToken) {
 			res.cookie('refreshToken', authPayload.refreshToken, {
 				httpOnly: true,
@@ -49,144 +76,75 @@ export class AuthController {
 			});
 		}
 
-		res.status(201).json({
-			message: 'User registered successfully',
-			data: {
-				user: {
-					id: authPayload.user.id,
-					name: authPayload.user.name,
-					username: authPayload.user.username,
-					email: authPayload.user.email,
-					avatar: authPayload.user.avatar,
-					createdAt: authPayload.user.createdAt,
-				},
+		res.status(200).json({
+			message: 'Login successful',
+			user: {
+				id: authPayload.user.id,
+				username: authPayload.user.username,
+				email: authPayload.user.email,
+				avatar: authPayload.user.avatar,
+				createdAt: authPayload.user.createdAt,
 			},
 		});
 	});
 
-	static login = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			const { username, email, password } = req.body;
-
-			const loginIdentifier = username || email;
-
-			if (!loginIdentifier || !password) {
-				throw new BadRequestError('Invalid Credentials ');
-			}
-
-			// Get IP address and device info from request
-			const ipAddress =
-				req.ip || (req.headers['x-forwarded-for'] as string) || '';
-			const userAgent = req.headers['user-agent'] || '';
-
-			const authPayload = await AuthService.login(
-				loginIdentifier,
-				password,
-				ipAddress,
-				userAgent
-			);
-
-			// Set access token cookie
-			res.cookie('accessToken', authPayload.token, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'strict',
-				maxAge: 15 * 60 * 1000, // 15 minutes
-			});
-
-			// Set refresh token cookie
-			if (authPayload.refreshToken) {
-				res.cookie('refreshToken', authPayload.refreshToken, {
-					httpOnly: true,
-					secure: process.env.NODE_ENV === 'production',
-					sameSite: 'strict',
-					maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-				});
-			}
-
-			res.status(200).json({
-				message: 'Login successful',
-				data: {
-					user: {
-						id: authPayload.user.id,
-						username: authPayload.user.username,
-						email: authPayload.user.email,
-						avatar: authPayload.user.avatar,
-						createdAt: authPayload.user.createdAt,
-					},
-				},
-			});
+	static getCurrentUser = AsyncHandler(async (req: Request, res: Response) => {
+		if (!req.user) {
+			res.status(401).json({ error: 'Not authenticated' });
+			return;
 		}
-	);
 
-	static getCurrentUser = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			if (!req.user) {
-				res.status(401).json({ error: 'Not authenticated' });
-				return;
-			}
+		res.status(200).json({
+			message: 'User profile retrieved successfully',
+			user: {
+				id: req.user.id,
+				username: req.user.username,
+				email: req.user.email,
+				avatar: req.user.avatar,
+				createdAt: req.user.createdAt,
+			},
+		});
+	});
 
-			res.status(200).json({
-				message: 'User profile retrieved successfully',
-				data: {
-					user: {
-						id: req.user.id,
-						username: req.user.username,
-						email: req.user.email,
-						avatar: req.user.avatar,
-						createdAt: req.user.createdAt,
-					},
-				},
-			});
+	static refreshToken = AsyncHandler(async (req: Request, res: Response) => {
+		const refreshToken = req.cookies.refreshToken;
+
+		if (!refreshToken) {
+			res.status(400).json({ error: 'Refresh token is required' });
+			return;
 		}
-	);
 
-	static refreshToken = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			const refreshToken = req.cookies.refreshToken;
+		const { accessToken } = await AuthService.refreshAccessToken(refreshToken);
 
-			if (!refreshToken) {
-				res.status(400).json({ error: 'Refresh token is required' });
-				return;
-			}
+		res.cookie('accessToken', accessToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 15 * 60 * 1000, // 15 minutes
+		});
 
-			const { accessToken } = await AuthService.refreshAccessToken(
-				refreshToken
-			);
+		res.status(200).json({
+			message: 'Token refreshed successfully',
+		});
+	});
 
-			// Set new access token cookie
-			res.cookie('accessToken', accessToken, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'strict',
-				maxAge: 15 * 60 * 1000, // 15 minutes
-			});
+	static verifyEmail = AsyncHandler(async (req: Request, res: Response) => {
+		const { token } = req.query;
 
-			res.status(200).json({
-				message: 'Token refreshed successfully',
-			});
+		if (!token || typeof token !== 'string') {
+			res.status(400).json({ error: 'Verification token is required' });
+			return;
 		}
-	);
 
-	static verifyEmail = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			const { token } = req.query;
+		await AuthService.verifyEmail(token);
 
-			if (!token || typeof token !== 'string') {
-				res.status(400).json({ error: 'Verification token is required' });
-				return;
-			}
-
-			await AuthService.verifyEmail(token);
-
-			res.status(200).json({
-				message: 'Email verified successfully',
-			});
-		}
-	);
+		res.status(200).json({
+			message: 'Email verified successfully',
+		});
+	});
 
 	static requestPasswordReset = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
+		async (req: Request, res: Response) => {
 			const { email } = req.body;
 
 			if (!email) {
@@ -197,53 +155,50 @@ export class AuthController {
 			await AuthService.requestPasswordReset(email);
 
 			res.status(200).json({
-				message: 'Password reset email sent if the email exists in our system',
+				message: 'check your email for password reset instructions',
 			});
 		}
 	);
 
-	static resetPassword = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			const { token, newPassword } = req.body;
+	static resetPassword = AsyncHandler(async (req: Request, res: Response) => {
+		const { code, email, newPassword } = req.body;
 
-			if (!token || !newPassword) {
-				res.status(400).json({ error: 'Token and new password are required' });
-				return;
-			}
-
-			await AuthService.resetPassword(token, newPassword);
-
-			res.status(200).json({
-				message: 'Password reset successful',
-			});
+		if (!code || !email || !newPassword) {
+			res
+				.status(400)
+				.json({ error: 'Reset code, email and new password are required' });
+			return;
 		}
-	);
 
-	static updateEmail = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
-			if (!req.user) {
-				res.status(401).json({ error: 'Not authenticated' });
-				return;
-			}
+		await AuthService.resetPassword(code, email, newPassword);
 
-			const { newEmail } = req.body;
+		res.status(200).json({
+			message: 'Password reset successful',
+		});
+	});
 
-			if (!newEmail) {
-				res.status(400).json({ error: 'New email is required' });
-				return;
-			}
-
-			await AuthService.updateEmail(req.user.id, newEmail);
-
-			res.status(200).json({
-				message:
-					'Email update initiated. Please verify your new email address.',
-			});
+	static updateEmail = AsyncHandler(async (req: Request, res: Response) => {
+		if (!req.user) {
+			res.status(401).json({ error: 'Not authenticated' });
+			return;
 		}
-	);
+
+		const { newEmail } = req.body;
+
+		if (!newEmail) {
+			res.status(400).json({ error: 'New email is required' });
+			return;
+		}
+
+		await AuthService.updateEmail(req.user.id, newEmail);
+
+		res.status(200).json({
+			message: 'Email update initiated. Please verify your new email address.',
+		});
+	});
 
 	static resendVerificationEmail = AsyncHandler(
-		async (req: Request, res: Response): Promise<void> => {
+		async (req: Request, res: Response) => {
 			if (!req.user) {
 				res.status(401).json({ error: 'Not authenticated' });
 				return;

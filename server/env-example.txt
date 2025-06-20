@@ -10,6 +10,7 @@ CLIENT_URL=http://localhost:3000
 JWT_SECRET=replace_this_with_a_strong_random_secret_at_least_32_chars
 JWT_REFRESH_SECRET=replace_this_with_a_different_strong_random_secret
 COOKIE_SECRET=replace_this_with_another_different_strong_random_secret
+RESET_TOKEN_SECRET=replace_this_with_another_strong_random_secret_for_reset_tokens
 
 # Token expiry times
 ACCESS_TOKEN_EXPIRY=15m
