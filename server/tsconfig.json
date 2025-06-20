@@ -15,10 +15,7 @@
 		"emitDecoratorMetadata": true,
 		"strictPropertyInitialization": false,
 		"sourceMap": true,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./*"]
-		}
+		"baseUrl": "."
 	},
 	"include": ["./**/*"],
 	"exclude": ["node_modules", "dist"]
